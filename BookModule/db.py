@@ -12,5 +12,5 @@ DB_INSTANCE = 'bookstore'
 
 connection_string = f"{DB_TYPE}://{DB_USER}:{DB_USER_PASS}@{DB_HOST}/{DB_INSTANCE}"
 
-engine = create_engine(connection_string, echo=True)
+engine = create_engine(connection_string, echo=True, isolation_level="READ UNCOMMITTED")
 Session = sessionmaker()
