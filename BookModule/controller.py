@@ -84,6 +84,9 @@ def delete_book(isbn):
 
 @app.route('/api/bookcollection/books/', methods=['POST'])
 def post_book():
+    """
+    Method that handles a POST request for a book.
+    """
     post_body = json.loads(request.get_data())
     is_valid, not_valid_reason = validate_book_post_or_put_body(post_body)
     status = 201
@@ -107,7 +110,14 @@ def post_book():
 
 
 @app.route('/api/bookcollection/books/<isbn>', methods=['PUT'])
-def patch_book(isbn):
+def put_book(isbn):
+    """
+    Method that handles a PUT request for a book by the ISBN code.
+
+    Creates the book if it doesn't already exist.
+
+    :param isbn: isbn code of the book that is to be updated/created
+    """
     put_body = json.loads(request.get_data())
 
     is_valid, not_valid_reason = validate_book_post_or_put_body(put_body)
@@ -201,6 +211,9 @@ def delete_author(author_id):
 
 @app.route('/api/bookcollection/authors/', methods=['POST'])
 def post_author():
+    """
+    Method that handles a POST request for an author..
+    """
     post_body = json.loads(request.get_data())
     is_valid, not_valid_reason = validate_author_post_or_put_body(post_body)
     status = 201
@@ -224,8 +237,16 @@ def post_author():
     return jsonify(response_body.__dict__), status
 
 
-@app.route('/api/bookcollection/authors/<author_id>', methods=['PATCH'])
-def patch_author(author_id):
+@app.route('/api/bookcollection/authors/<author_id>', methods=['PUT'])
+def put_author(author_id):
+    """
+    Method that handles a PUT request for an author by his id.
+
+    In this case PUT cannot behave like a POST because the id of the
+    author is created in the database with an autoincrement mechanism.
+
+    :param author_id: id of the author that is to be updated.
+    """
     put_body = json.loads(request.get_data())
 
     is_valid, not_valid_reason = validate_author_post_or_put_body(put_body)
