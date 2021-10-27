@@ -167,7 +167,7 @@ def update_entity_by_identifier(entity, identifier_name, identifier_value, updat
     """
     Wrapper for a generic ORM call that is updating an Entity by an identifier.
 
-    :param entity: the type of the entity that is to be retrieved
+    :param entity: the type of the entity that is to be updated
     :param identifier_name: the column/field by which the identifier will be searched
     :param identifier_value: the value of the identifier column
     :param updated_entity_fields: a dictionary that contains the new values of the entity
@@ -196,8 +196,31 @@ def update_entity_by_identifier(entity, identifier_name, identifier_value, updat
     return response
 
 
+def get_all_entities(entity, **kwargs):
+    """
+    Wrapper for a generic ORM call that is retrieving all instances of
+    any entity also using some filter parameters.
+
+    :param entity: the type of the entity that is to be retrieved
+    :param kwargs: the parameters by which the filters will be made
+    """
+    return local_session.query(entity).filter_by(**kwargs).all()
+
+
+def get_all_books_with_filters(**kwargs):
+    """
+    Wrapper for an ORM call that is retrieving all books by some filters.
+
+    :param kwargs: the parameters by which the filters will be made
+    """
+    return get_all_entities(Book, **kwargs)
+
+
 class OperationResponseWrapper:
     def __init__(self, payload=None, error=None, completed_operation=True):
         self.payload = payload
         self.error = error
         self.completed_operation = completed_operation
+
+
+print(get_all_books_with_filters(year_of_publishing=2009, title='Ceva2'))

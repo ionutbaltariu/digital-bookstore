@@ -265,8 +265,8 @@ def put_author(author_id):
         elif db_response.completed_operation is False:
             # update did not succeed because there was no author with that id
             # will not try POST, because of the autoincrement feature of the author id
-            status = 400
-            response_body = ErrorDto(400,
+            status = 406
+            response_body = ErrorDto(406,
                                      'Cannot continue with creation of the author if the author does not exist. '
                                      'Please use the POST method.',
                                      'INVALID_PARAMETERS')
