@@ -6,13 +6,28 @@ from db import Session, engine
 local_session = Session(bind=engine)
 
 
+class BookDto:
+    def __init__(self, book):
+        self.isbn = book.isbn
+        self.title = book.title
+        self.publisher = book.publisher
+        self.year_of_publishing = book.year_of_publishing
+        self.genre = book.genre
+        # self.links = links.__dict__
+
+
+class AuthorDto:
+    def __init__(self, author):
+        self.first_name = author.first_name
+        self.last_name = author.last_name
+
+
 def get_book_by_isbn(isbn):
     """
     Wrapper for an ORM call that is retrieving a book by its ISBN.
 
     :param isbn: isbn code of the book that is to be retrieved
     """
-    print('was here')
     return get_entity_by_identifier(Book, 'isbn', isbn)
 
 
@@ -221,6 +236,3 @@ class OperationResponseWrapper:
         self.payload = payload
         self.error = error
         self.completed_operation = completed_operation
-
-
-print(get_all_books_with_filters(year_of_publishing=2009, title='Ceva2'))

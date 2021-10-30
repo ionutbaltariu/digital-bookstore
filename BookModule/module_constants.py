@@ -20,7 +20,7 @@ class StatusDto:
 
 
 # used in GET, DELETE when a requested book does not actually exist.
-BOOK_NOT_FOUND_BODY = ErrorDto(404, 'Requested book does not exist.', 'INVALID_OPERATION')
+BOOK_NOT_FOUND_BODY = ErrorDto(404, 'Requested book does not exist.', 'NONEXISTENT_RESOURCE')
 GENERIC_SUCCESS_STATUS_BODY = StatusDto(200, 'Operation was completed successfully.')
 CREATE_GENERIC_SUCCESS_STATUS_BODY = StatusDto(201, 'Operation was completed successfully.')
-AUTHOR_NOT_FOUND_BODY = ErrorDto(404, 'Requested author does not exist', 'INVALID_OPERATION')
+AUTHOR_NOT_FOUND_BODY = ErrorDto(404, 'Requested author does not exist', 'NONEXISTENT_RESOURCE')
