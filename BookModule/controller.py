@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Response
 from module_constants import ErrorDto, BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
     CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY
 from model import get_book_by_isbn, delete_book_by_isbn, insert_book, update_book, get_author_by_id, \
@@ -19,7 +19,7 @@ It allows its users to perform basic operations with book and author entities.
 """
 
 
-class Book(BaseModel):
+class Book(HyperModel):
     isbn: str
     title: str
     publisher: str
@@ -37,7 +37,7 @@ class Book(BaseModel):
         orm_mode = True
 
 
-class Author(BaseModel):
+class Author(HyperModel):
     first_name: str
     last_name: str
 
@@ -74,9 +74,9 @@ def get_books():
 
 
 @app.get("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK, response_model=Book)
-def get_book(isbn: str):
+def get_book(isbn: str, response : Response):
     """
-    Method that handles a DELETE request for a book by the ISBN code.
+    Method that handles a GET request for a book by the ISBN code.
     """
     db_response = get_book_by_isbn(str(isbn))
     response_body = ''
@@ -89,8 +89,9 @@ def get_book(isbn: str):
     else:
         status_code = status.HTTP_200_OK
         response_body = Book.from_orm(db_response.payload)
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+
+    response.status_code = status_code
+    return response_body
 
 
 @app.post("/api/bookcollection/books/", status_code=status.HTTP_201_CREATED)
