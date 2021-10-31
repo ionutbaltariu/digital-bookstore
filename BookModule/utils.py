@@ -65,7 +65,7 @@ def validate_book_post_or_put_body(body):
 
     if is_valid is True:
         for field in body:
-            if field not in mandatory_fields:
+            if (field not in mandatory_fields) and (field != "links"):
                 is_valid = False
                 reason = f"Body contains an unknown field: '{field}'"
                 break

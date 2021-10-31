@@ -2,25 +2,9 @@ from books import Book
 from authors import Author
 from books_authors import BooksAuthors
 from db import Session, engine
+import json
 
 local_session = Session(bind=engine)
-
-
-class BookDto:
-    def __init__(self, book):
-        self.isbn = book.isbn
-        self.title = book.title
-        self.publisher = book.publisher
-        self.year_of_publishing = book.year_of_publishing
-        self.genre = book.genre
-        # self.links = links.__dict__
-
-
-class AuthorDto:
-    def __init__(self, author):
-        self.first_name = author.first_name
-        self.last_name = author.last_name
-
 
 def get_book_by_isbn(isbn):
     """
@@ -219,7 +203,16 @@ def get_all_entities(entity, **kwargs):
     :param entity: the type of the entity that is to be retrieved
     :param kwargs: the parameters by which the filters will be made
     """
-    return local_session.query(entity).filter_by(**kwargs).all()
+    response = OperationResponseWrapper()
+
+    try:
+        response.payload = local_session.query(entity).filter_by(**kwargs).all()
+        response.completed_operation = True
+    except Exception as e:
+        response.error = e
+        response.completed_operation = False
+
+    return response
 
 
 def get_all_books_with_filters(**kwargs):

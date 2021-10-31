@@ -1,12 +1,15 @@
+from typing import List
+
 from fastapi import FastAPI, status
 from module_constants import ErrorDto, BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
     CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY
 from model import get_book_by_isbn, delete_book_by_isbn, insert_book, update_book, get_author_by_id, \
-    delete_author_by_id, insert_author, update_author, BookDto, AuthorDto
+    delete_author_by_id, insert_author, update_author, get_all_books_with_filters
 import json
 from utils import validate_book_post_or_put_body
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from fastapi_hypermodel import HyperModel, UrlFor, LinkSet
 from pydantic import BaseModel
 
 description = """
@@ -23,10 +26,29 @@ class Book(BaseModel):
     year_of_publishing: int
     genre: str
 
+    links = LinkSet(
+        {
+            "self": UrlFor("get_book", {"isbn": "<isbn>"}),
+            "books": UrlFor("get_books"),
+        }
+    )
+
+    class Config:
+        orm_mode = True
+
 
 class Author(BaseModel):
     first_name: str
     last_name: str
+
+    links = LinkSet(
+        {
+            "self": UrlFor("get_author", {"author_id": "<author_id>"}),
+        }
+    )
+
+    class Config:
+        orm_mode = True
 
 
 app = FastAPI(
@@ -43,8 +65,15 @@ app = FastAPI(
     },
 )
 
+HyperModel.init_app(app)
 
-@app.get("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK)
+
+@app.get("/api/bookcollection/books/", status_code=status.HTTP_200_OK, response_model=List[Book])
+def get_books():
+    return {}
+
+
+@app.get("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK, response_model=Book)
 def get_book(isbn: str):
     """
     Method that handles a DELETE request for a book by the ISBN code.
@@ -59,14 +88,14 @@ def get_book(isbn: str):
         response_body = BOOK_NOT_FOUND_BODY
     else:
         status_code = status.HTTP_200_OK
-        response_body = BookDto(db_response.payload)
-
+        response_body = Book.from_orm(db_response.payload)
     json_data = jsonable_encoder(response_body.__dict__)
     return JSONResponse(content=json_data, status_code=status_code)
 
 
 @app.post("/api/bookcollection/books/", status_code=status.HTTP_201_CREATED)
 def post_book(book: Book):
+    print(book)
     """
     Method that handles a POST request for a book.
     """
@@ -173,7 +202,7 @@ def get_author(author_id: str):
         response_body = AUTHOR_NOT_FOUND_BODY
     else:
         status_code = status.HTTP_200_OK
-        response_body = AuthorDto(db_response.payload)
+        response_body = Author.from_orm(db_response.payload)
 
     json_data = jsonable_encoder(response_body.__dict__)
     return JSONResponse(content=json_data, status_code=status_code)
