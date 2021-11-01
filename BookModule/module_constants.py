@@ -6,7 +6,7 @@ class ErrorDto:
         self.error_code = error_code
         self.error_reason = error_reason
         self.error_source = error_source
-        self.timestamp = datetime.now()
+        self.timestamp = str(datetime.now())
 
 
 class StatusDto:

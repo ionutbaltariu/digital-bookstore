@@ -224,6 +224,15 @@ def get_all_books_with_filters(**kwargs):
     return get_all_entities(Book, **kwargs)
 
 
+def get_all_authors_with_filters(**kwargs):
+    """
+    Wrapper for an ORM call that is retrieving all the authors by some filters.
+
+    :param kwargs: the parameters by which the filters will be made
+    """
+    return get_all_entities(Author, **kwargs)
+
+
 class OperationResponseWrapper:
     def __init__(self, payload=None, error=None, completed_operation=True):
         self.payload = payload

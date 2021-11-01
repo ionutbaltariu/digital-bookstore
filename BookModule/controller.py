@@ -1,10 +1,10 @@
 from typing import List
 
-from fastapi import FastAPI, status, Response
+from fastapi import FastAPI, status, Response, HTTPException
 from module_constants import ErrorDto, BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
     CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY
 from model import get_book_by_isbn, delete_book_by_isbn, insert_book, update_book, get_author_by_id, \
-    delete_author_by_id, insert_author, update_author, get_all_books_with_filters
+    delete_author_by_id, insert_author, update_author, get_all_books_with_filters, get_all_authors_with_filters
 import json
 from utils import validate_book_post_or_put_body
 from fastapi.encoders import jsonable_encoder
@@ -29,6 +29,8 @@ class Book(HyperModel):
     links = LinkSet(
         {
             "self": UrlFor("get_book", {"isbn": "<isbn>"}),
+            "delete_self": UrlFor("delete_book", {"isbn": "<isbn>"}),
+            "put_self": UrlFor("put_book", {"isbn": "<isbn>"}),
             "books": UrlFor("get_books"),
         }
     )
@@ -38,12 +40,13 @@ class Book(HyperModel):
 
 
 class Author(HyperModel):
+    id: int
     first_name: str
     last_name: str
 
     links = LinkSet(
         {
-            "self": UrlFor("get_author", {"author_id": "<author_id>"}),
+            "self": UrlFor("get_author", {"author_id": "<id>"}),
         }
     )
 
@@ -69,23 +72,49 @@ HyperModel.init_app(app)
 
 
 @app.get("/api/bookcollection/books/", status_code=status.HTTP_200_OK, response_model=List[Book])
-def get_books():
-    return {}
+def get_books(response: Response, genre: str = None, year_of_publishing: int = None,
+              page: int = 1, items_per_page: int = 15, ):
+    """
+    Method that handles a generic GET request for all of the existent books.
+    """
+    book_list = []
+    query_parameters = {}
+
+    if genre:
+        query_parameters["genre"] = genre
+    if year_of_publishing:
+        query_parameters["year_of_publishing"] = year_of_publishing
+
+    db_response = get_all_books_with_filters(**query_parameters)
+
+    if db_response.error:
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        json_data = ErrorDto(status_code, str(db_response.error), 'EXCEPTION').__dict__
+        raise HTTPException(status_code=500, detail=json_data)
+    else:
+        status_code = status.HTTP_200_OK
+        for book in db_response.payload:
+            book_list.append(Book.from_orm(book))
+        response_body = book_list[(page - 1) * items_per_page:page * items_per_page]
+
+    response.status_code = status_code
+    return response_body
 
 
 @app.get("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK, response_model=Book)
-def get_book(isbn: str, response : Response):
+def get_book(isbn: str, response: Response):
     """
     Method that handles a GET request for a book by the ISBN code.
     """
     db_response = get_book_by_isbn(str(isbn))
     response_body = ''
+
     if db_response.error:
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        response_body = ErrorDto(status_code, str(db_response.error), 'EXCEPTION')
+        json_data = ErrorDto(status.HTTP_500_INTERNAL_SERVER_ERROR, str(db_response.error), 'EXCEPTION').__dict__
+        raise HTTPException(status_code=500, detail=json_data)
     elif not db_response.completed_operation:
-        status_code = status.HTTP_404_NOT_FOUND
-        response_body = BOOK_NOT_FOUND_BODY
+        json_data = BOOK_NOT_FOUND_BODY.__dict__
+        raise HTTPException(status_code=404, detail=json_data)
     else:
         status_code = status.HTTP_200_OK
         response_body = Book.from_orm(db_response.payload)
@@ -188,8 +217,35 @@ def delete_book(isbn):
     return JSONResponse(content=json_data, status_code=status_code)
 
 
-@app.get("/api/bookcollection/authors/{author_id}", status_code=status.HTTP_200_OK)
-def get_author(author_id: str):
+@app.get("/api/bookcollection/authors/", status_code=status.HTTP_200_OK, response_model=List[Author])
+def get_authors(response: Response, name: str = None):
+    """
+    Method that handles a generic GET request for all of the existent books.
+    """
+    author_list = []
+    query_parameters = {}
+
+    if name:
+        query_parameters["first_name"] = name
+
+    db_response = get_all_authors_with_filters(**query_parameters)
+
+    if db_response.error:
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        json_data = ErrorDto(status_code, str(db_response.error), 'EXCEPTION').__dict__
+        raise HTTPException(status_code=500, detail=json_data)
+    else:
+        status_code = status.HTTP_200_OK
+        for author in db_response.payload:
+            author_list.append(Author.from_orm(author))
+        response_body = author_list
+
+    response.status_code = status_code
+    return response_body
+
+
+@app.get("/api/bookcollection/authors/{author_id}", status_code=status.HTTP_200_OK, response_model=Author)
+def get_author(author_id: str, response: Response):
     """
     Method that handles a GET request for an author by his id.
     """
@@ -197,16 +253,19 @@ def get_author(author_id: str):
 
     if db_response.error:
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        response_body = ErrorDto(status_code, str(db_response.error), 'EXCEPTION')
+        json_data = ErrorDto(status_code, str(db_response.error), 'EXCEPTION').__dict__
+        raise HTTPException(status_code=500, detail=json_data)
     elif not db_response.completed_operation:
         status_code = status.HTTP_404_NOT_FOUND
-        response_body = AUTHOR_NOT_FOUND_BODY
+        json_data = AUTHOR_NOT_FOUND_BODY.__dict__
+        raise HTTPException(status_code=status_code, detail=json_data)
     else:
         status_code = status.HTTP_200_OK
         response_body = Author.from_orm(db_response.payload)
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    response.status_code = status_code
+
+    return response_body
 
 
 @app.post("/api/bookcollection/authors/", status_code=status.HTTP_201_CREATED)
