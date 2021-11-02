@@ -4,7 +4,7 @@ from sqlalchemy import Column, String, Integer
 
 class Author(Base):
     __tablename__ = 'authors'
-    id = Column(Integer, nullable=False, primary_key=True)
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
 

@@ -6,6 +6,7 @@ import json
 
 local_session = Session(bind=engine)
 
+
 def get_book_by_isbn(isbn):
     """
     Wrapper for an ORM call that is retrieving a book by its ISBN.
@@ -233,8 +234,146 @@ def get_all_authors_with_filters(**kwargs):
     return get_all_entities(Author, **kwargs)
 
 
+def get_all_authors_of_book(isbn):
+    """
+    ORM call that returns all of the authors associated to a given book. (Join on ISBN)
+
+    :param isbn:
+    :return:
+    """
+    response = OperationResponseWrapper()
+    try:
+        response.payload = local_session \
+            .query(Author) \
+            .join(BooksAuthors) \
+            .filter(BooksAuthors.isbn == isbn) \
+            .all()
+
+        response.completed_operation = True
+    except Exception as e:
+        response.error = e
+        response.completed_operation = False
+
+    return response
+
+
+def add_author_to_book(isbn: str, author):
+    """
+    ORM call that tries to insert a given author to a book identified by its ISBN.
+    :param isbn: isbn of the book
+    :param author: a dictionary containing the first_name and the last_name of the author
+    """
+    response = OperationResponseWrapper()
+    try:
+        author_obj = get_all_authors_with_filters(**author).payload
+
+        if len(author_obj) > 0:
+            book_to_author_link = {
+                'isbn': isbn,
+                'author_id': author_obj[0].id
+            }
+            did_insert = insert_into_books_authors(book_to_author_link)
+            if did_insert:
+                response.completed_operation = True
+            else:
+                response.completed_operation = False
+        else:
+            response.error = "Given author does not exist, therefore it cannot be linked to the book."
+            response.completed_operation = False
+
+    except Exception as e:
+        response.error = e
+        response.completed_operation = False
+
+    return response
+
+
+def insert_into_books_authors(relation):
+    """
+    Only used in model.
+    Inserts an entry into the books-authors link table.
+    The link ties an author to a specific book.
+    :param relation: A dictionary containing both the isbn of the book and the id of the author.
+    """
+    did_insert = True
+    try:
+        relation_to_insert = BooksAuthors(index=1, isbn=relation["isbn"], author_id=relation["author_id"])
+        local_session.add(relation_to_insert)
+        local_session.commit()
+    except Exception as e:
+        did_insert = False
+
+    return did_insert
+
+
+def delete_author_from_books_authors(relation):
+    """
+    Only used in model.
+    Deletes an entry from the books-authors link table.
+    :param relation: A dictionary containing both the isbn of the book and the id of the author.
+    """
+    response = OperationResponseWrapper()
+
+    try:
+        author = local_session.query(BooksAuthors) \
+            .filter_by(author_id=relation["author_id"], isbn=relation["isbn"]) \
+            .first()
+
+        if author:
+            local_session.delete(author)
+            local_session.commit()
+            response.completed_operation = True
+        else:
+            response.client_error = "Given author is not related to the book."
+            response.completed_operation = False
+    except Exception as e:
+        response.error = e
+        response.completed_operation = False
+
+    return response
+
+
+def delete_author_from_book(isbn: str, author):
+    """
+    ORM call that tries to delete a given author from a book identified by its ISBN.
+    :param isbn: isbn of the book
+    :param author: a dictionary containing the first_name and the last_name of the author
+    """
+    response = OperationResponseWrapper()
+
+    try:
+        author_obj = get_all_authors_with_filters(**author).payload
+
+        if len(author_obj) > 0:
+            book_to_author_link = {
+                'isbn': isbn,
+                'author_id': author_obj[0].id
+            }
+            delete_response = delete_author_from_books_authors(book_to_author_link)
+
+            if delete_response.error:
+                response.error = delete_response.error
+                response.completed_operation = False
+            elif delete_response.client_error:
+                response.client_error = delete_response.client_error
+                response.completed_operation = False
+            else:
+                response.completed_operation = True
+
+        else:
+            response.client_error = "Given author does not exist, therefore it cannot be linked to the book."
+            response.completed_operation = False
+
+    except Exception as e:
+        response.error = e
+        response.completed_operation = False
+
+    return response
+
+
 class OperationResponseWrapper:
-    def __init__(self, payload=None, error=None, completed_operation=True):
+    def __init__(self, payload=None, error=None, completed_operation=True, client_error=None):
         self.payload = payload
         self.error = error
+        self.client_error = client_error
         self.completed_operation = completed_operation
