@@ -7,10 +7,24 @@ from model import get_book_by_isbn, delete_book_by_isbn, insert_book, update_boo
     get_all_authors_of_book, add_author_to_book, delete_author_from_book
 import json
 from utils import validate_book_post_or_put_body
-from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from fastapi_hypermodel import HyperModel, UrlFor, LinkSet
-from pydantic import BaseModel, constr
+from fastapi_hypermodel import HyperModel
+from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess
+from fastapi.openapi.utils import get_openapi
+
+
+def get_documentation_for_specific_resource(endpoint: str) -> dict:
+    openapi_schema = get_openapi(
+        title="OpenAPI Documentation",
+        version="0.0.01",
+        description="This is the schema of the API.",
+        routes=app.routes,
+    )
+    if endpoint == "whole_api":
+        return openapi_schema["paths"]
+    else:
+        return openapi_schema["paths"][endpoint]
+
 
 description = """
 This particular API is a module for the digital bookstore.
@@ -30,58 +44,12 @@ tags_metadata = [
     {
         "name": "Authors of a book",
         "description": "Operations with the authors of a specific book."
+    },
+    {
+        "name": "Specific documentation links",
+        "description": "Can be used to check the structure of the API for various endpoints."
     }
 ]
-
-
-class Book(HyperModel):
-    isbn: str
-    title: str
-    publisher: str
-    year_of_publishing: int
-    genre: str
-
-    links = LinkSet(
-        {
-            "self": UrlFor("get_book", {"isbn": "<isbn>"}),
-            "authors": UrlFor("get_authors_of_book", {"isbn": "<isbn>"})
-        }
-    )
-
-    class Config:
-        orm_mode = True
-
-
-class Author(HyperModel):
-    id: int
-    first_name: str
-    last_name: str
-
-    links = LinkSet(
-        {
-            "self": UrlFor("get_author", {"author_id": "<id>"}),
-        }
-    )
-
-    class Config:
-        orm_mode = True
-
-
-class AuthorPostBody(BaseModel):
-    first_name: constr(min_length=1, max_length=64)
-    last_name: constr(min_length=1, max_length=64)
-
-
-class Error(BaseModel):
-    error_code: int
-    error_source: str
-    error_reason: str
-
-
-class GenericSuccess(BaseModel):
-    code: int
-    message: str
-
 
 app = FastAPI(
     title="Digital Bookstore - POS",
@@ -139,10 +107,11 @@ def get_books(genre: str = None, year_of_publishing: int = None,
          response_model=Book,
          tags=["Books"]
          )
-def get_book(isbn: str):
+def get_book(isbn: str, verbose: bool = True):
     """
     Method that handles a GET request for a book by the ISBN code.
     """
+    print(get_documentation_for_specific_resource("/api/bookcollection/books/{isbn}"))
     db_response = get_book_by_isbn(str(isbn))
 
     if db_response.error:
@@ -153,7 +122,11 @@ def get_book(isbn: str):
         response_body = BOOK_NOT_FOUND_BODY
     else:
         status_code = 200
-        response_body = Book.from_orm(db_response.payload).__dict__
+
+        if verbose:
+            response_body = Book.from_orm(db_response.payload).__dict__
+        else:
+            response_body = SimplifiedBook.from_orm(db_response.payload).__dict__
 
     return JSONResponse(status_code=status_code, content=response_body)
 
@@ -431,6 +404,9 @@ def get_authors_of_book(isbn: str, response: Response):
                      406: {"model": Error}},
           tags=["Authors of a book"])
 def add_author_to_book_by_isbn(isbn: str, author: AuthorPostBody):
+    """
+    Can be used to add an author to a specific book (identified by ISBN)
+    """
     post_body = json.loads(author.json())
     db_response = add_author_to_book(isbn, post_body)
 
@@ -456,6 +432,9 @@ def add_author_to_book_by_isbn(isbn: str, author: AuthorPostBody):
                        200: {"model": GenericSuccess}},
             tags=["Authors of a book"])
 def delete_author_from_book_by_isbn(isbn: str, author: AuthorPostBody):
+    """
+    Can be used to delete an author from a specific book (identified by ISBN)
+    """
     post_body = json.loads(author.json())
     print(post_body)
     db_response = delete_author_from_book(isbn, post_body)
@@ -471,3 +450,33 @@ def delete_author_from_book_by_isbn(isbn: str, author: AuthorPostBody):
         response_body = GENERIC_SUCCESS_STATUS_BODY
 
     return JSONResponse(status_code=status_code, content=response_body)
+
+
+@app.options("/api/bookcollection/",
+             status_code=status.HTTP_200_OK,
+             tags=["Specific documentation links"])
+def get_documentation_for_api():
+    """
+    Make a HTTP OPTIONS call to this endpoint to get the documentation for the whole API.
+    """
+    return get_documentation_for_specific_resource("whole_api")
+
+
+@app.options("/api/bookcollection/books",
+             status_code=status.HTTP_200_OK,
+             tags=["Specific documentation links"])
+def get_documentation_for_books():
+    """
+    Make a HTTP OPTIONS call to this endpoint to get the documentation for /books branch of endpoints.
+    """
+    return get_documentation_for_specific_resource("/api/bookcollection/books/{isbn}")
+
+
+@app.options("/api/bookcollection/authors",
+             status_code=status.HTTP_200_OK,
+             tags=["Specific documentation links"])
+def get_documentation_for_books():
+    """
+    Make a HTTP OPTIONS call to this endpoint to get the documentation for /authors branch of endpoints.
+    """
+    return get_documentation_for_specific_resource("/api/bookcollection/authors/{author_id}")
