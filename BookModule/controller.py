@@ -1,8 +1,7 @@
 from typing import List
-
 from fastapi import FastAPI, status, Response, HTTPException
-from module_constants import ErrorDto, BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
-    CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY
+from module_constants import BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
+    CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY, get_error_body
 from model import get_book_by_isbn, delete_book_by_isbn, insert_book, update_book, get_author_by_id, \
     delete_author_by_id, insert_author, update_author, get_all_books_with_filters, get_all_authors_with_filters, \
     get_all_authors_of_book, add_author_to_book, delete_author_from_book
@@ -19,6 +18,21 @@ This particular API is a module for the digital bookstore.
 It allows its users to perform basic operations with book and author entities.
 """
 
+tags_metadata = [
+    {
+        "name": "Books",
+        "description": "Operations with books.",
+    },
+    {
+        "name": "Authors",
+        "description": "Operations with authors.",
+    },
+    {
+        "name": "Authors of a book",
+        "description": "Operations with the authors of a specific book."
+    }
+]
+
 
 class Book(HyperModel):
     isbn: str
@@ -30,9 +44,7 @@ class Book(HyperModel):
     links = LinkSet(
         {
             "self": UrlFor("get_book", {"isbn": "<isbn>"}),
-            "delete_self": UrlFor("delete_book", {"isbn": "<isbn>"}),
-            "put_self": UrlFor("put_book", {"isbn": "<isbn>"}),
-            "books": UrlFor("get_books"),
+            "authors": UrlFor("get_authors_of_book", {"isbn": "<isbn>"})
         }
     )
 
@@ -60,6 +72,17 @@ class AuthorPostBody(BaseModel):
     last_name: constr(min_length=1, max_length=64)
 
 
+class Error(BaseModel):
+    error_code: int
+    error_source: str
+    error_reason: str
+
+
+class GenericSuccess(BaseModel):
+    code: int
+    message: str
+
+
 app = FastAPI(
     title="Digital Bookstore - POS",
     description=description,
@@ -77,8 +100,12 @@ app = FastAPI(
 HyperModel.init_app(app)
 
 
-@app.get("/api/bookcollection/books/", status_code=status.HTTP_200_OK, response_model=List[Book])
-def get_books(response: Response, genre: str = None, year_of_publishing: int = None,
+@app.get("/api/bookcollection/books/",
+         responses={200: {"model": List[Book]},
+                    500: {"model": Error}},
+         response_model=List[Book],
+         tags=["Books"])
+def get_books(genre: str = None, year_of_publishing: int = None,
               page: int = 1, items_per_page: int = 15, ):
     """
     Method that handles a generic GET request for all of the existent books.
@@ -94,67 +121,80 @@ def get_books(response: Response, genre: str = None, year_of_publishing: int = N
     db_response = get_all_books_with_filters(**query_parameters)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     else:
-        status_code = status.HTTP_200_OK
+        status_code = 200
         for book in db_response.payload:
-            book_list.append(Book.from_orm(book))
+            book_list.append(Book.from_orm(book).__dict__)
         response_body = book_list[(page - 1) * items_per_page:page * items_per_page]
 
-    response.status_code = status_code
-    return response_body
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.get("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK, response_model=Book)
-def get_book(isbn: str, response: Response):
+@app.get("/api/bookcollection/books/{isbn}",
+         responses={200: {"model": Book},
+                    404: {"model": Error},
+                    500: {"model": Error}},
+         response_model=Book,
+         tags=["Books"]
+         )
+def get_book(isbn: str):
     """
     Method that handles a GET request for a book by the ISBN code.
     """
     db_response = get_book_by_isbn(str(isbn))
-    response_body = ''
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif not db_response.completed_operation:
-        json_data = BOOK_NOT_FOUND_BODY.__dict__
-        raise HTTPException(status_code=404, detail=json_data)
+        status_code = 404
+        response_body = BOOK_NOT_FOUND_BODY
     else:
-        status_code = status.HTTP_200_OK
-        response_body = Book.from_orm(db_response.payload)
+        status_code = 200
+        response_body = Book.from_orm(db_response.payload).__dict__
 
-    response.status_code = status_code
-    return response_body
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.post("/api/bookcollection/books/", status_code=status.HTTP_201_CREATED)
+@app.post("/api/bookcollection/books/",
+          responses={201: {"model": GenericSuccess},
+                     406: {"model": Error},
+                     500: {"model": Error}},
+          response_model=GenericSuccess,
+          tags=["Books"]
+          )
 def post_book(book: Book):
     """
     Method that handles a POST request for a book.
     """
     post_body = json.loads(book.json())
     is_valid, not_valid_reason = validate_book_post_or_put_body(post_body)
-    status_code = status.HTTP_201_CREATED
-    response_body = ''
 
     if is_valid is not True:
-        json_data = ErrorDto(406, not_valid_reason, 'INVALID_PARAMETERS').__dict__
-        raise HTTPException(status_code=406, detail=json_data)
+        status_code = 406
+        response_body = get_error_body(status_code, not_valid_reason, "INVALID_PARAMETERS")
     else:
         db_response = insert_book(post_body)
 
         if db_response.error:
-            json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-            raise HTTPException(status_code=500, detail=json_data)
+            status_code = 500
+            response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
         else:
+            status_code = 201
             response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.put("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK)
+@app.put("/api/bookcollection/books/{isbn}",
+         responses={200: {"model": GenericSuccess},
+                    500: {"model": Error},
+                    406: {"model": Error}},
+         response_model=GenericSuccess,
+         tags=["Books"]
+         )
 def put_book(isbn: str, book: Book):
     """
     Method that handles a PUT request for a book by the ISBN code.
@@ -164,66 +204,72 @@ def put_book(isbn: str, book: Book):
     put_body = json.loads(book.json())
 
     is_valid, not_valid_reason = validate_book_post_or_put_body(put_body)
-    status_code = status.HTTP_200_OK
-    response_body = ''
 
     if is_valid is not True:
-        json_data = ErrorDto(406, not_valid_reason, 'INVALID_PARAMETERS').__dict__
-        raise HTTPException(status_code=406, detail=json_data)
+        status_code = 406
+        response_body = get_error_body(status_code, not_valid_reason, "INVALID_PARAMETERS")
     elif put_body['isbn'] != isbn:
-        json_data = ErrorDto(406,
-                             'When updating a book it is not allowed to change its ISBN.',
-                             'INVALID_PARAMETERS').__dict__
-        raise HTTPException(status_code=406, detail=json_data)
+        status_code = 406
+        response_body = get_error_body(status_code,
+                                       "When updating a book it is not allowed to change its ISBN.",
+                                       "INVALID_PARAMETERS")
+
     else:
         db_response = update_book(isbn, put_body)
 
         if db_response.error:
-            json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-            raise HTTPException(status_code=500, detail=json_data)
+            status_code = 500
+            response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
         elif db_response.completed_operation is False:
             # update did not succeed because there was no book with that ISBN
             # will try POST
             db_response = insert_book(put_body)
 
             if db_response.error:
-                json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-                raise HTTPException(status_code=500, detail=json_data)
+                status_code = 500
+                response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
             else:
-                status_code = status.HTTP_201_CREATED
+                status_code = 201
                 response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
         else:
             # update happened, status will remain 200
-            response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
+            status_code = 200
+            response_body = GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.delete("/api/bookcollection/books/{isbn}", status_code=status.HTTP_200_OK)
+@app.delete("/api/bookcollection/books/{isbn}",
+            response_model=GenericSuccess,
+            responses={500: {"model": Error},
+                       404: {"model": Error},
+                       200: {"model": GenericSuccess}},
+            tags=["Books"])
 def delete_book(isbn):
     """
     Method that handles a DELETE request for a book by the ISBN code.
     """
     db_response = delete_book_by_isbn(isbn)
-    response_body = ''
-    status_code = status.HTTP_200_OK
+
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif not db_response.completed_operation:
-        json_data = BOOK_NOT_FOUND_BODY.__dict__
-        raise HTTPException(status_code=404, detail=json_data)
+        status_code = 404
+        response_body = BOOK_NOT_FOUND_BODY
     else:
         status_code = status.HTTP_200_OK
         response_body = GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.get("/api/bookcollection/authors/", status_code=status.HTTP_200_OK, response_model=List[Author])
-def get_authors(response: Response, name: str = None):
+@app.get("/api/bookcollection/authors/",
+         response_model=List[Author],
+         responses={200: {"model": List[Author]},
+                    500: {"model": Error}},
+         tags=["Authors"])
+def get_authors(name: str = None):
     """
     Method that handles a generic GET request for all of the existent books.
     """
@@ -236,62 +282,71 @@ def get_authors(response: Response, name: str = None):
     db_response = get_all_authors_with_filters(**query_parameters)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     else:
-        status_code = status.HTTP_200_OK
+        status_code = 200
         for author in db_response.payload:
             author_list.append(Author.from_orm(author))
         response_body = author_list
 
-    response.status_code = status_code
-    return response_body
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.get("/api/bookcollection/authors/{author_id}", status_code=status.HTTP_200_OK, response_model=Author)
-def get_author(author_id: str, response: Response):
+@app.get("/api/bookcollection/authors/{author_id}",
+         response_model=Author,
+         responses={200: {"model": GenericSuccess},
+                    500: {"model": Error},
+                    404: {"model": Error}},
+         tags=["Authors"])
+def get_author(author_id: str):
     """
     Method that handles a GET request for an author by his id.
     """
     db_response = get_author_by_id(author_id)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif not db_response.completed_operation:
-        json_data = AUTHOR_NOT_FOUND_BODY.__dict__
-        raise HTTPException(status_code=404, detail=json_data)
+        status_code = 404
+        response_body = AUTHOR_NOT_FOUND_BODY
     else:
         status_code = status.HTTP_200_OK
-        response_body = Author.from_orm(db_response.payload)
+        response_body = Author.from_orm(db_response.payload).__dict__
 
-    response.status_code = status_code
-
-    return response_body
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.post("/api/bookcollection/authors/", status_code=status.HTTP_201_CREATED)
+@app.post("/api/bookcollection/authors/",
+          response_model=GenericSuccess,
+          responses={201: {"model": GenericSuccess},
+                     500: {"model": Error}},
+          tags=["Authors"])
 def post_author(author: AuthorPostBody):
     """
     Method that handles a POST request for an author.
     """
     post_body = json.loads(author.json())
-    status_code = status.HTTP_201_CREATED
-    response_body = ''
 
     db_response = insert_author(post_body)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     else:
+        status_code = 200
         response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.put("/api/bookcollection/authors/{author_id}", status_code=status.HTTP_200_OK)
+@app.put("/api/bookcollection/authors/{author_id}",
+         response_model=GenericSuccess,
+         responses={200: {"model": GenericSuccess},
+                    500: {"model": Error},
+                    406: {"model": Error}},
+         tags=["Authors"])
 def put_author(author_id: str, author: AuthorPostBody):
     """
     Method that handles a PUT request for an author by his id.
@@ -300,55 +355,57 @@ def put_author(author_id: str, author: AuthorPostBody):
     author is created in the database with an autoincrement mechanism.
     """
     put_body = json.loads(author.json())
-
-    status_code = status.HTTP_200_OK
-    response_body = ''
-
     db_response = update_author(author_id, put_body)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif db_response.completed_operation is False:
         # update did not succeed because there was no author with that id
         # will not try POST, because of the autoincrement feature of the author id
-        json_data = ErrorDto(406,
-                             'Cannot continue with creation of the author if the author does not exist. '
-                             'Please use the POST method.',
-                             'CANNOT_COMPLETE_ACTION').__dict__
-        raise HTTPException(status_code=406, detail=json_data)
-
+        status_code = 406
+        response_body = get_error_body(status_code,
+                                       'Cannot continue with creation of the author if the author does not exist. '
+                                       'Please use the POST method.',
+                                       "EXCEPTION")
     else:
         # update happened, status will remain 200
+        status_code = 200
         response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.delete("/api/bookcollection/authors/{author_id}", status_code=status.HTTP_200_OK)
+@app.delete("/api/bookcollection/authors/{author_id}",
+            response_model=GenericSuccess,
+            responses={200: {"model": GenericSuccess},
+                       500: {"model": Error},
+                       404: {"model": Error}},
+            tags=["Authors"])
 def delete_author(author_id: str):
     """
     Method that handles a DELETE request for an author by his id.
     """
     db_response = delete_author_by_id(author_id)
-    response_body = ''
-    status_code = status.HTTP_200_OK
+
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif not db_response.completed_operation:
-        json_data = AUTHOR_NOT_FOUND_BODY.__dict__
-        raise HTTPException(status_code=404, detail=json_data)
+        status_code = 404
+        response_body = AUTHOR_NOT_FOUND_BODY
     else:
-        status_code = status.HTTP_200_OK
+        status_code = 200
         response_body = GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=status_code)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.get("/api/bookcollection/books/{isbn}/authors", status_code=status.HTTP_200_OK, response_model=List[Author])
+@app.get("/api/bookcollection/books/{isbn}/authors",
+         response_model=List[Author],
+         responses={500: {"model": Error},
+                    200: {"model": List[Author]}},
+         tags=["Authors of a book"])
 def get_authors_of_book(isbn: str, response: Response):
     """
     Method that handles a GET request for the authors of a book by the book's ISBN.
@@ -357,51 +414,60 @@ def get_authors_of_book(isbn: str, response: Response):
     response_body = []
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     else:
         for author in db_response.payload:
-            response_body.append(Author.from_orm(author))
-            response.status_code = 200
+            response_body.append(Author.from_orm(author).__dict__)
+        status_code = 200
 
-    return response_body
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.post("/api/bookcollection/books/{isbn}/authors", status_code=status.HTTP_201_CREATED)
+@app.post("/api/bookcollection/books/{isbn}/authors",
+          response_model=GenericSuccess,
+          responses={201: {"model": GenericSuccess},
+                     500: {"model": Error},
+                     406: {"model": Error}},
+          tags=["Authors of a book"])
 def add_author_to_book_by_isbn(isbn: str, author: AuthorPostBody):
     post_body = json.loads(author.json())
-    print(post_body)
     db_response = add_author_to_book(isbn, post_body)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif not db_response.completed_operation:
-        json_data = ErrorDto(406,
-                             'Could not insert author / Author is already related to the book',
-                             'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 406
+        response_body = get_error_body(status_code,
+                                       'Could not insert author / Author is already related to the book',
+                                       "ALREADY_EXISTENT_RESOURCE")
     else:
+        status_code = 201
         response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=201)
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
-@app.delete("/api/bookcollection/books/{isbn}/authors", status_code=status.HTTP_200_OK)
+@app.delete("/api/bookcollection/books/{isbn}/authors",
+            response_model=GenericSuccess,
+            responses={500: {"model": Error},
+                       404: {"model": Error},
+                       200: {"model": GenericSuccess}},
+            tags=["Authors of a book"])
 def delete_author_from_book_by_isbn(isbn: str, author: AuthorPostBody):
     post_body = json.loads(author.json())
     print(post_body)
     db_response = delete_author_from_book(isbn, post_body)
 
     if db_response.error:
-        json_data = ErrorDto(500, str(db_response.error), 'EXCEPTION').__dict__
-        raise HTTPException(status_code=500, detail=json_data)
+        status_code = 500
+        response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     elif db_response.client_error:
-        json_data = ErrorDto(404, str(db_response.client_error), 'NONEXISTENT_RESOURCE').__dict__
-        raise HTTPException(status_code=404, detail=json_data)
+        status_code = 404
+        response_body = get_error_body(status_code, str(db_response.client_error), 'NONEXISTENT_RESOURCE')
     else:
-        response_body = CREATE_GENERIC_SUCCESS_STATUS_BODY
+        status_code = 200
+        response_body = GENERIC_SUCCESS_STATUS_BODY
 
-    json_data = jsonable_encoder(response_body.__dict__)
-    return JSONResponse(content=json_data, status_code=201)
+    return JSONResponse(status_code=status_code, content=response_body)
