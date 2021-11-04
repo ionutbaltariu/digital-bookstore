@@ -1,4 +1,6 @@
 from typing import List
+
+import uvicorn
 from fastapi import FastAPI, status, Response, HTTPException
 from module_constants import BOOK_NOT_FOUND_BODY, GENERIC_SUCCESS_STATUS_BODY, \
     CREATE_GENERIC_SUCCESS_STATUS_BODY, AUTHOR_NOT_FOUND_BODY, get_error_body
@@ -480,3 +482,7 @@ def get_documentation_for_books():
     Make a HTTP OPTIONS call to this endpoint to get the documentation for /authors branch of endpoints.
     """
     return get_documentation_for_specific_resource("/api/bookcollection/authors/{author_id}")
+
+
+if __name__ == "__main__":
+    uvicorn.run("controller:app", host='0.0.0.0', port=8000, reload=True, debug=True)

@@ -1,0 +1,7 @@
+fastapi==0.70.0
+fastapi_hypermodel==0.2.8
+isbnlib==3.10.8
+pydantic==1.8.2
+SQLAlchemy==1.4.1
+uvicorn==0.15.0
+mysql-connector-python==8.0.27

@@ -9,6 +9,8 @@ DB_USER = getenv('DB_USER')
 DB_USER_PASS = getenv('DB_USER_PASS')
 DB_HOST = 'localhost'
 DB_INSTANCE = 'bookstore'
+print(DB_USER)
+print(DB_USER_PASS)
 
 connection_string = f"{DB_TYPE}://{DB_USER}:{DB_USER_PASS}@{DB_HOST}/{DB_INSTANCE}"
 
