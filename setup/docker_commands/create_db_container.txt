@@ -1,5 +1,0 @@
-# I tried to make it a script but the image initialization from docker takes some seconds, therefore the exec commands
-# will be run even though the database is not fully set up
-docker run -p 127.0.0.1:3306:3306  --name digital-bookstore -e MARIADB_ROOT_PASSWORD=password -d mariadb
-docker exec -i digital-bookstore mysql -u root -ppassword < create_db_and_users.sql
-docker exec -i digital-bookstore mysql -u root -ppassword bookstore < dump.sql

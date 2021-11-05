@@ -36,6 +36,7 @@
 --
 -- Table structure for table `authors`
 --
+USE bookstore;
 DROP TABLE IF EXISTS `authors`;
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */

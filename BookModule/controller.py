@@ -113,7 +113,6 @@ def get_book(isbn: str, verbose: bool = True):
     """
     Method that handles a GET request for a book by the ISBN code.
     """
-    print(get_documentation_for_specific_resource("/api/bookcollection/books/{isbn}"))
     db_response = get_book_by_isbn(str(isbn))
 
     if db_response.error:

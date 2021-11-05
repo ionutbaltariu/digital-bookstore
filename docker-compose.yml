@@ -1,6 +1,19 @@
 version: "3.7"
 
 services:
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+
+    volumes:
+      - ./setup/sql:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+    networks:
+      - some-net
+
   book_module:
     build:
       context: BookModule
@@ -9,7 +22,10 @@ services:
       - DB_USER_PASS=${DB_USER_PASS}
     ports:
       - 8000:8000
+    networks:
+      - some-net
+
 
 networks:
-    default:
-        driver: digital-bookstore
+  some-net:
+    driver: bridge
