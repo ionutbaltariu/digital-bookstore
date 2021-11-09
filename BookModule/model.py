@@ -44,7 +44,6 @@ def insert_book(book):
         response.completed_operation = True
         response.payload = book_to_insert
     except Exception as e:
-        local_session.rollback()
         response.completed_operation = False
         response.error = e
 
@@ -87,7 +86,6 @@ def insert_author(author):
         response.completed_operation = True
         response.payload = author_to_insert
     except Exception as e:
-        local_session.rollback()
         response.completed_operation = False
         response.error = e
 
@@ -189,7 +187,6 @@ def update_entity_by_identifier(entity, identifier_name, identifier_value, updat
         else:
             response.completed_operation = False
     except Exception as e:
-        local_session.rollback()
         response.completed_operation = False
         response.error = e
 

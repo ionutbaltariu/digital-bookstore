@@ -15,8 +15,11 @@ services:
       - some-net
 
   book_module:
+    restart: always
     build:
       context: BookModule
+    volumes:
+      - ./BookModule:/app
     environment:
       - DB_USER=${DB_USER}
       - DB_USER_PASS=${DB_USER_PASS}
