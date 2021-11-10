@@ -21,12 +21,26 @@ services:
     volumes:
       - ./BookModule:/app
     environment:
-      - DB_USER=${DB_USER}
-      - DB_USER_PASS=${DB_USER_PASS}
+      # currently hardcoded
+      - DB_USER=web_user
+      - DB_USER_PASS=parolaweb_user
     ports:
       - 8000:8000
     networks:
       - some-net
+  
+  mongo:
+    image: mongo
+    container_name: 'mongobd'
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=orders
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - ./setup/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - '27017-27019:27017-27019'
 
 
 networks:
