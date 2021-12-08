@@ -9,11 +9,38 @@ services:
       MYSQL_ROOT_PASSWORD: password
 
     volumes:
-      - ./setup/sql:/docker-entrypoint-initdb.d
+      - ./setup/sql/books-authors:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
     networks:
       - some-net
+
+  users_db:
+    image: mariadb
+    container_name: 'users_db'
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+
+    volumes:
+      - ./setup/sql/users:/docker-entrypoint-initdb.d
+    ports:
+      - 3307:3307
+    networks:
+      - some-net
+
+  mongo:
+    image: mongo
+    container_name: 'orders_db'
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=orders
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - ./setup/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - '27017-27019:27017-27019'
 
   book_module:
     restart: always
@@ -29,19 +56,6 @@ services:
       - 8000:8000
     networks:
       - some-net
-  
-  mongo:
-    image: mongo
-    container_name: 'orders_db'
-    restart: always
-    environment:
-      - MONGO_INITDB_DATABASE=orders
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
-    volumes:
-      - ./setup/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    ports:
-      - '27017-27019:27017-27019'
 
 
 networks:
