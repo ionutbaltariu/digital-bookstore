@@ -5,4 +5,4 @@ CREATE DATABASE users_db;
 
 CREATE USER db_manager IDENTIFIED BY 'paroladb_manager';
 GRANT ALL PRIVILEGES ON *.* TO 'db_manager'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'web_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'db_manager'@'%';
