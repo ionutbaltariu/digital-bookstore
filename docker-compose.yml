@@ -41,8 +41,13 @@ services:
       - ./setup/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - '27017-27019:27017-27019'
+    networks:
+      some-net:
+        aliases:
+          - orders_db
 
   book_module:
+    container_name: 'book_module'
     restart: always
     build:
       context: BookModule
@@ -54,6 +59,19 @@ services:
       - DB_USER_PASS=parolaweb_user
     ports:
       - 8000:8000
+    networks:
+      some-net:
+        aliases:
+          - book-module.dev
+
+  orders_module:
+    restart: always
+    build:
+      context: OrderModule
+    volumes:
+      - ./OrderModule:/app
+    ports:
+      - 8001:8001
     networks:
       - some-net
 

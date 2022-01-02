@@ -1,5 +1,18 @@
+from typing import Dict, List
 from fastapi_hypermodel import HyperModel, UrlFor, LinkSet, HALFor
 from pydantic import BaseModel, constr
+
+
+# find a way to share models between Modules
+class IsbnStockPair(BaseModel):
+    isbn: str
+    quantity: int
+
+
+# find a way to share models between Modules
+class OrderInput(BaseModel):
+    user: str
+    books: List[IsbnStockPair]
 
 
 class Book(HyperModel):
@@ -14,7 +27,7 @@ class Book(HyperModel):
     links = LinkSet(
         {
             "self": HALFor("get_book", {"isbn": "<isbn>"}, "Get the book"),
-            "parent" : HALFor("get_books", {}, "Book container"),
+            "parent": HALFor("get_books", {}, "Book container"),
             "authors": HALFor("get_authors_of_book", {"isbn": "<isbn>"}, "Get the authors of the book")
         }
     )
@@ -31,7 +44,7 @@ class SimplifiedBook(HyperModel):
     links = LinkSet(
         {
             "self": HALFor("get_book", {"isbn": "<isbn>"}, "Get the book"),
-            "parent" : HALFor("get_books", {}, "Book container"),
+            "parent": HALFor("get_books", {}, "Book container"),
             "authors": HALFor("get_authors_of_book", {"isbn": "<isbn>"}, "Get the authors of the book")
         }
     )

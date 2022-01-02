@@ -11,9 +11,8 @@ import json
 from utils import validate_book_post_or_put_body
 from fastapi.responses import JSONResponse
 from fastapi_hypermodel import HyperModel
-from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess
+from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess, OrderInput
 from fastapi.openapi.utils import get_openapi
-
 
 def get_documentation_for_specific_resource(endpoint: str) -> dict:
     openapi_schema = get_openapi(
@@ -481,6 +480,70 @@ def get_documentation_for_books():
     Make a HTTP OPTIONS call to this endpoint to get the documentation for /authors branch of endpoints.
     """
     return get_documentation_for_specific_resource("/api/bookcollection/authors/{author_id}")
+
+
+@app.post("/api/bookcollection/process-order-and-adapt-stocks",
+         response_model=List[Book],
+         responses={500: {"model": Error},
+                    404: {"model": Error},
+                    409: {"model": Error},
+                    200: {"model": List[Book]}},
+         tags=["Orders"])
+def process_order(order_input: OrderInput):
+    """
+    Method that a POST request that is meant to be an intermediate for the orders module.
+
+    The method receives a list of ISBN's paired with a quantity and checks whether the
+    given books are available to be placed in an order or not.
+    """
+    db_response = get_all_books_with_filters()
+    all_books_indexed = {}
+    updated_books = []
+    # we make a dict with key as the book's ISBN
+    # and as value, the book itself
+    # this way we avoid making a SELECT for every book
+    # in the order
+    response_body = None
+    status_code = 200
+
+    if db_response.payload:
+        all_books = db_response.payload
+
+        for book in all_books:
+            all_books_indexed[Book.from_orm(book).dict()["isbn"]] = Book.from_orm(book).dict()
+
+        response_body = []
+
+        for ordered_book in order_input.books:
+            isbn = ordered_book.dict()['isbn']
+            if isbn in all_books_indexed:
+                actual_stock = all_books_indexed[isbn]['stock']
+                if actual_stock - ordered_book.quantity >= 0:
+                    current_book = all_books_indexed[isbn]
+                    current_book["stock"] -= ordered_book.quantity
+                    response_body.append(current_book)
+                    updated_books.append(current_book)
+                else:
+                    updated_books = []
+                    status_code = 409
+                    response_body = get_error_body(409,
+                                                   f"Cannot proceed with the command,"
+                                                   f" there are not enough books with the isbn '{isbn}'",
+                                                   f"Required: {ordered_book.quantity}, available: {actual_stock}")
+                    break
+
+            else:
+                status_code = 404
+                response_body = get_error_body(404, f"Book with the isbn: '{isbn}' does not exist.", "ERROR")
+                break
+    else:
+        status_code = 500
+        response_body = get_error_body(500, str(db_response.error), "EXCEPTION")
+
+    for updated_book in updated_books:
+        update_book(updated_book['isbn'], {'stock': updated_book['stock']})
+
+    return JSONResponse(status_code=status_code, content=response_body)
 
 
 if __name__ == "__main__":
