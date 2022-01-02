@@ -8,6 +8,8 @@ class Book(HyperModel):
     publisher: str
     year_of_publishing: int
     genre: str
+    price: float
+    stock: int
 
     links = LinkSet(
         {

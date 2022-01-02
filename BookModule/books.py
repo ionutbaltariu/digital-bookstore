@@ -1,7 +1,7 @@
 from sqlalchemy.orm import relationship
 
 from db import Base
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Float
 from json import dumps
 
 
@@ -12,6 +12,8 @@ class Book(Base):
     publisher = Column(String(100), nullable=False)
     year_of_publishing = Column(Integer)
     genre = Column(String(100), nullable=False)
+    price = Column(Float, nullable=False)
+    stock = Column(Integer, nullable=False)
 
     child = relationship('BooksAuthors', backref="Book", passive_deletes=True)
 
