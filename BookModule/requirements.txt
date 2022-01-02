@@ -1,5 +1,5 @@
 fastapi==0.70.0
-fastapi_hypermodel==0.2.8
+fastapi-hypermodel==0.3.2
 isbnlib==3.10.8
 pydantic==1.8.2
 SQLAlchemy==1.4.1

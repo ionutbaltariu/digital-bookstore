@@ -96,7 +96,7 @@ def get_books(genre: str = None, year_of_publishing: int = None,
     else:
         status_code = 200
         for book in db_response.payload:
-            book_list.append(Book.from_orm(book).__dict__)
+            book_list.append(Book.from_orm(book).dict())
         response_body = book_list[(page - 1) * items_per_page:page * items_per_page]
 
     return JSONResponse(status_code=status_code, content=response_body)
@@ -125,9 +125,9 @@ def get_book(isbn: str, verbose: bool = True):
         status_code = 200
 
         if verbose:
-            response_body = Book.from_orm(db_response.payload).__dict__
+            response_body = Book.from_orm(db_response.payload).dict()
         else:
-            response_body = SimplifiedBook.from_orm(db_response.payload).__dict__
+            response_body = SimplifiedBook.from_orm(db_response.payload).dict()
 
     return JSONResponse(status_code=status_code, content=response_body)
 
@@ -287,7 +287,7 @@ def get_author(author_id: str):
         response_body = AUTHOR_NOT_FOUND_BODY
     else:
         status_code = status.HTTP_200_OK
-        response_body = Author.from_orm(db_response.payload).__dict__
+        response_body = Author.from_orm(db_response.payload).dict()
 
     return JSONResponse(status_code=status_code, content=response_body)
 
@@ -392,7 +392,7 @@ def get_authors_of_book(isbn: str, response: Response):
         response_body = get_error_body(status_code, str(db_response.error), "EXCEPTION")
     else:
         for author in db_response.payload:
-            response_body.append(Author.from_orm(author).__dict__)
+            response_body.append(Author.from_orm(author).dict())
         status_code = 200
 
     return JSONResponse(status_code=status_code, content=response_body)

@@ -1,4 +1,4 @@
-from fastapi_hypermodel import HyperModel, UrlFor, LinkSet
+from fastapi_hypermodel import HyperModel, UrlFor, LinkSet, HALFor
 from pydantic import BaseModel, constr
 
 
@@ -13,8 +13,9 @@ class Book(HyperModel):
 
     links = LinkSet(
         {
-            "self": UrlFor("get_book", {"isbn": "<isbn>"}),
-            "authors": UrlFor("get_authors_of_book", {"isbn": "<isbn>"})
+            "self": HALFor("get_book", {"isbn": "<isbn>"}, "Get the book"),
+            "parent" : HALFor("get_books", {}, "Book container"),
+            "authors": HALFor("get_authors_of_book", {"isbn": "<isbn>"}, "Get the authors of the book")
         }
     )
 
@@ -29,8 +30,9 @@ class SimplifiedBook(HyperModel):
 
     links = LinkSet(
         {
-            "self": UrlFor("get_book", {"isbn": "<isbn>"}),
-            "authors": UrlFor("get_authors_of_book", {"isbn": "<isbn>"})
+            "self": HALFor("get_book", {"isbn": "<isbn>"}, "Get the book"),
+            "parent" : HALFor("get_books", {}, "Book container"),
+            "authors": HALFor("get_authors_of_book", {"isbn": "<isbn>"}, "Get the authors of the book")
         }
     )
 
@@ -45,7 +47,7 @@ class Author(HyperModel):
 
     links = LinkSet(
         {
-            "self": UrlFor("get_author", {"author_id": "<id>"}),
+            "self": HALFor("get_author", {"author_id": "<id>"}, "Get the author"),
         }
     )
 

@@ -19,9 +19,9 @@ class Book(Base):
 
     def __repr__(self):
         return dumps({
-            'isbn' : self.isbn,
-            'title' : self.title,
-            'publisher' : self.publisher,
-            'year_of_publishing' : self.year_of_publishing,
-            'genre' : self.genre
+            'isbn': self.isbn,
+            'title': self.title,
+            'publisher': self.publisher,
+            'year_of_publishing': self.year_of_publishing,
+            'genre': self.genre
         })
