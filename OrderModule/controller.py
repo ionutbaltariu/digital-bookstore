@@ -23,7 +23,7 @@ async def check_and_place_order(order_input: OrderInput):
     if user_id:
         order = {}
         response = requests.post("http://book-module.dev:8000/api/bookcollection/process-order-and-adapt-stocks",
-                                data=order_input.json())
+                                 data=order_input.json())
         response_body = response.json()
 
         if response.status_code == 200:

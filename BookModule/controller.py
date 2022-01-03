@@ -13,6 +13,9 @@ from fastapi.responses import JSONResponse
 from fastapi_hypermodel import HyperModel
 from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess, OrderInput
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = ["*"]
 
 def get_documentation_for_specific_resource(endpoint: str) -> dict:
     openapi_schema = get_openapi(
@@ -64,6 +67,14 @@ app = FastAPI(
         "name": "GNU General Public License v3.0",
         "url": "https://github.com/xeno-john/digital-bookstore/blob/main/LICENSE",
     },
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 HyperModel.init_app(app)
