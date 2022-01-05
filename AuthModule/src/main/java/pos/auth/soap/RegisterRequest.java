@@ -1,5 +1,8 @@
 package pos.auth.soap;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.xml.bind.annotation.*;
 
 
@@ -9,29 +12,12 @@ import javax.xml.bind.annotation.*;
         "password"
 })
 @XmlRootElement(name = "registerRequest")
+@Getter
+@Setter
 public class RegisterRequest {
 
     @XmlElement(required = true)
     protected String name;
     @XmlElement(required = true)
     protected String password;
-
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String value) {
-        this.name = value;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-
-    public void setPassword(String value) {
-        this.password = value;
-    }
-
 }

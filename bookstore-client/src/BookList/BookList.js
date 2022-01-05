@@ -83,6 +83,20 @@ function BookList() {
                 setData(books);
                 console.log(books);
             });
+
+        // AuthModule dummy request 
+        const body = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"xmlns:gs="http://pos.examples.soap.stateless/Auth">"><soapenv:Header/><soapenv:Body><gs:loginRequest><gs:name>user</gs:name><gs:password>password</gs:password></gs:loginRequest></soapenv:Body></soapenv:Envelope>`;
+
+        fetch("http://localhost:8080/sample", {
+            body: body,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml'
+
+            },
+            mode: 'cors',
+        })
+            .then((response) => console.log(response));
     }, []);
 
     return (
@@ -94,7 +108,7 @@ function BookList() {
                 height: '50%', width: '70%', position: 'absolute', left: '50%', top: '50%',
                 transform: 'translate(-50%, -50%)'
             }}>
-                <DataGrid style={{borderColor: 'black'}}
+                <DataGrid style={{ borderColor: 'black' }}
                     rows={data}
                     columns={columns}
                     disableSelectionOnClick

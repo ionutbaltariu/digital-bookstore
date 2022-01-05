@@ -6,7 +6,6 @@ import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
 import pos.auth.Jwt.JwtTokenUtil;
-import pos.auth.Repositories.UserRepository;
 import pos.auth.soap.ValidateRequest;
 import pos.auth.soap.ValidateResponse;
 
@@ -14,9 +13,6 @@ import pos.auth.soap.ValidateResponse;
 public class ValidationService {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private UserRepository userRepository;
 
     private static final String NAMESPACE_URI = "http://pos.examples.soap.stateless/Auth";
 

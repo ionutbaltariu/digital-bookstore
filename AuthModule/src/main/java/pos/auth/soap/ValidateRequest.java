@@ -1,5 +1,8 @@
 package pos.auth.soap;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.xml.bind.annotation.*;
 
 
@@ -8,15 +11,9 @@ import javax.xml.bind.annotation.*;
         "token",
 })
 @XmlRootElement(name = "validateRequest")
+@Getter
+@Setter
 public class ValidateRequest {
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
     @XmlElement(required = true)
     protected String token;
 }

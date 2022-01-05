@@ -1,5 +1,8 @@
 package pos.auth.soap;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -7,15 +10,9 @@ import javax.xml.bind.annotation.*;
         "status",
 })
 @XmlRootElement(name = "validateResponse")
+@Getter
+@Setter
 public class ValidateResponse {
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     @XmlElement(required = true)
     protected String status;
 }
