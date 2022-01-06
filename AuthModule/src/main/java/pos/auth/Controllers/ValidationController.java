@@ -24,6 +24,7 @@ public class ValidationController {
             try{
                 if(jwtTokenUtil.validateToken(input.getToken())){
                     r.setStatus("VALID");
+                    r.setRole(jwtTokenUtil.getRoleFromToken(input.getToken()));
                 }
             }
             catch(Exception e){

@@ -25,16 +25,24 @@ public class LoginController {
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "loginRequest")
     @ResponsePayload
     public LoginResponse login(@RequestPayload LoginRequest input) throws Exception {
-        final UserDTO userDetails = userDetailsService
-                .loadUserByUsername(input.getName());
         LoginResponse r = new LoginResponse();
-        if(!BCrypt.checkpw(input.getPassword(), userDetails.getPassword())){
-            throw new Exception("WRONG_PASSWORD");
+
+        try{
+            final UserDTO userDetails = userDetailsService
+                    .loadUserByUsername(input.getName());
+
+            if(!BCrypt.checkpw(input.getPassword(), userDetails.getPassword())){
+                r.setErrorMessage("Wrong password for user '" + input.getName() + "'.");
+            }
+            else{
+                final String token = jwtTokenUtil.generateToken(userDetails);
+                r.setToken(token);
+            }
         }
-        else{
-            final String token = jwtTokenUtil.generateToken(userDetails);
-            r.setToken(token);
-            return r;
+        catch (Exception e){
+            r.setErrorMessage(e.getMessage());
         }
+
+        return r;
     }
 }

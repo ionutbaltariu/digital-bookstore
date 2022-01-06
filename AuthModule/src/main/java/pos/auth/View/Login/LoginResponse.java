@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "token"
+    "token", "errorMessage"
 })
 @XmlRootElement(name = "loginResponse")
 @Getter
@@ -48,4 +48,7 @@ public class LoginResponse {
 
     @XmlElement(required = true)
     protected String token;
+
+    @XmlElement(required = true)
+    protected String errorMessage;
 }
