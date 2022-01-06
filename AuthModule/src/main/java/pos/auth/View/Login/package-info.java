@@ -5,5 +5,5 @@
 // Generated on: 2021.12.13 at 10:03:15 PM EET 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://pos.examples.soap.stateless/Auth", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
-package pos.auth.soap;
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://pos.examples.soap.stateless/login", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+package pos.auth.View.Login;

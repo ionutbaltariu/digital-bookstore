@@ -1,20 +1,20 @@
-package pos.auth.Services;
+package pos.auth.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
-import pos.auth.Jwt.JwtTokenUtil;
-import pos.auth.soap.ValidateRequest;
-import pos.auth.soap.ValidateResponse;
+import pos.auth.Model.JwtTokenUtil;
+import pos.auth.View.Validate.ValidateRequest;
+import pos.auth.View.Validate.ValidateResponse;
 
 @Endpoint
-public class ValidationService {
+public class ValidationController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
-    private static final String NAMESPACE_URI = "http://pos.examples.soap.stateless/Auth";
+    private static final String NAMESPACE_URI = "http://pos.examples.soap.stateless/validate";
 
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "validateRequest")
     @ResponsePayload

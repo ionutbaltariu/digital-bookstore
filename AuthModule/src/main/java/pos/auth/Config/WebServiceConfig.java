@@ -24,16 +24,16 @@ public class WebServiceConfig extends WsConfigurerAdapter {
         result.setApplicationContext(applicationContext);
         result.setTransformWsdlLocations(true);
 
-        return new ServletRegistrationBean(result, "/sample/*");
+        return new ServletRegistrationBean(result, "/login" , "/register", "/validate");
     }
 
-    @Bean(name="auth")
+    @Bean(name="login")
     public DefaultWsdl11Definition defaultWsdl11Definition(XsdSchema loginSchema){
         DefaultWsdl11Definition result = new DefaultWsdl11Definition();
 
         result.setPortTypeName("LoginPort");
-        result.setLocationUri("/sample");
-        result.setTargetNamespace("http://pos.examples.soap.stateless/Auth");
+        result.setLocationUri("/login");
+        result.setTargetNamespace("http://pos.examples.soap.stateless/login");
         result.setSchema(loginSchema);
 
         return result;
@@ -41,6 +41,40 @@ public class WebServiceConfig extends WsConfigurerAdapter {
 
     @Bean
     public XsdSchema loginSchema(){
-        return new SimpleXsdSchema(new ClassPathResource("auth.xsd"));
+        return new SimpleXsdSchema(new ClassPathResource("login.xsd"));
+    }
+
+    @Bean(name="register")
+    public DefaultWsdl11Definition registerDefaultWsdl11Definition(XsdSchema registerSchema){
+        DefaultWsdl11Definition result = new DefaultWsdl11Definition();
+
+        result.setPortTypeName("RegisterPort");
+        result.setLocationUri("/register");
+        result.setTargetNamespace("http://pos.examples.soap.stateless/register");
+        result.setSchema(registerSchema);
+
+        return result;
+    }
+
+    @Bean
+    public XsdSchema registerSchema(){
+        return new SimpleXsdSchema(new ClassPathResource("register.xsd"));
+    }
+
+    @Bean(name="validate")
+    public DefaultWsdl11Definition validateDefaultWsdl11Definition(XsdSchema validateSchema){
+        DefaultWsdl11Definition result = new DefaultWsdl11Definition();
+
+        result.setPortTypeName("ValidatePort");
+        result.setLocationUri("/validate");
+        result.setTargetNamespace("http://pos.examples.soap.stateless/validate");
+        result.setSchema(validateSchema);
+
+        return result;
+    }
+
+    @Bean
+    public XsdSchema validateSchema(){
+        return new SimpleXsdSchema(new ClassPathResource("validate.xsd"));
     }
 }

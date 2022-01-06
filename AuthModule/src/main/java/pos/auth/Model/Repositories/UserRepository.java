@@ -1,7 +1,7 @@
-package pos.auth.Repositories;
+package pos.auth.Model.Repositories;
 
 import org.springframework.data.repository.CrudRepository;
-import pos.auth.Entities.UserEntity;
+import pos.auth.Model.Entities.UserEntity;
 
 import java.util.List;
 

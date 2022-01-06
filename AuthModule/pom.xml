@@ -90,7 +90,9 @@
                 </executions>
                 <configuration>
                     <sources>
-                        <source>${project.basedir}/src/main/resources/auth.xsd</source>
+                        <source>${project.basedir}/src/main/resources/login.xsd</source>
+                        <source>${project.basedir}/src/main/resources/register.xsd</source>
+                        <source>${project.basedir}/src/main/resources/validate.xsd</source>
                     </sources>
                 </configuration>
             </plugin>

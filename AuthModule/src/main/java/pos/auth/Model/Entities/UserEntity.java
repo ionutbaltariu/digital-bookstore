@@ -1,4 +1,4 @@
-package pos.auth.Entities;
+package pos.auth.Model.Entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

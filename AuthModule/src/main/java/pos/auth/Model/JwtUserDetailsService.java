@@ -1,11 +1,11 @@
-package pos.auth.Jwt;
+package pos.auth.Model;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pos.auth.DTO.UserDTO;
-import pos.auth.Entities.UserEntity;
-import pos.auth.Repositories.UserRepository;
+import pos.auth.Model.DTO.UserDTO;
+import pos.auth.Model.Entities.UserEntity;
+import pos.auth.Model.Repositories.UserRepository;
 
 
 @Service

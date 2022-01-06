@@ -1,18 +1,19 @@
-package pos.auth.soap;
+package pos.auth.View.Validate;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.xml.bind.annotation.*;
 
+
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-        "status",
+        "token",
 })
-@XmlRootElement(name = "validateResponse")
+@XmlRootElement(name = "validateRequest")
 @Getter
 @Setter
-public class ValidateResponse {
+public class ValidateRequest {
     @XmlElement(required = true)
-    protected String status;
+    protected String token;
 }

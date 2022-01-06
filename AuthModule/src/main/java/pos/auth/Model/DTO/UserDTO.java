@@ -1,4 +1,4 @@
-package pos.auth.DTO;
+package pos.auth.Model.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

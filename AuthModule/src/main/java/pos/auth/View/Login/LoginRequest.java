@@ -6,7 +6,7 @@
 //
 
 
-package pos.auth.soap;
+package pos.auth.View.Login;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +28,8 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;sequence&gt;
- *         &lt;element name="token" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
+ *         &lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
+ *         &lt;element name="password" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -39,13 +40,15 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "token"
+    "name",
+    "password"
 })
-@XmlRootElement(name = "loginResponse")
+@XmlRootElement(name = "loginRequest")
 @Getter
 @Setter
-public class LoginResponse {
-
+public class LoginRequest {
     @XmlElement(required = true)
-    protected String token;
+    protected String name;
+    @XmlElement(required = true)
+    protected String password;
 }

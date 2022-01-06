@@ -1,22 +1,22 @@
-package pos.auth.Services;
+package pos.auth.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
-import pos.auth.Entities.UserEntity;
-import pos.auth.Repositories.UserRepository;
+import pos.auth.Model.Entities.UserEntity;
+import pos.auth.Model.Repositories.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCrypt;
-import pos.auth.soap.RegisterRequest;
-import pos.auth.soap.RegisterResponse;
+import pos.auth.View.Register.RegisterRequest;
+import pos.auth.View.Register.RegisterResponse;
 
 @Endpoint
-public class RegisterService {
+public class RegisterController {
     @Autowired
     private UserRepository userRepository;
 
-    private static final String NAMESPACE_URI = "http://pos.examples.soap.stateless/Auth";
+    private static final String NAMESPACE_URI = "http://pos.examples.soap.stateless/register";
 
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "registerRequest")
     @ResponsePayload

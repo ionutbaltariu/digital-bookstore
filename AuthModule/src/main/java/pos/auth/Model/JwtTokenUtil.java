@@ -1,4 +1,4 @@
-package pos.auth.Jwt;
+package pos.auth.Model;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import pos.auth.DTO.UserDTO;
+import pos.auth.Model.DTO.UserDTO;
 
 @Component
 public class JwtTokenUtil implements Serializable {
@@ -47,6 +47,7 @@ public class JwtTokenUtil implements Serializable {
     //generate token for user
     public String generateToken(UserDTO userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", userDetails.getRole());
         return doGenerateToken(claims, userDetails.getUsername());
     }
 
@@ -63,6 +64,7 @@ public class JwtTokenUtil implements Serializable {
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
                 .signWith(SignatureAlgorithm.HS512, secret)
+                .setIssuer("http://localhost:8080/")
                 .compact();
     }
 

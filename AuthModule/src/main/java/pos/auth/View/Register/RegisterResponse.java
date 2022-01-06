@@ -1,4 +1,4 @@
-package pos.auth.soap;
+package pos.auth.View.Register;
 
 import lombok.Getter;
 import lombok.Setter;

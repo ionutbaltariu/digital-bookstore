@@ -1,4 +1,4 @@
-package pos.auth.Jwt;
+package pos.auth.Model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
