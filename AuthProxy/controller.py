@@ -36,7 +36,7 @@ async def login(login_request: LoginRequest):
                 </soapenv:Envelope>"""
     headers = {'content-type': 'text/xml'}
 
-    response = requests.post("http://localhost:8080/login",
+    response = requests.post("http://auth-module.dev:8080/login",
                              data=body,
                              headers=headers)
 
@@ -70,7 +70,7 @@ async def register(register_request: RegisterRequest):
                 </soapenv:Envelope>"""
     headers = {'content-type': 'text/xml'}
 
-    response = requests.post("http://localhost:8080/register",
+    response = requests.post("http://auth-module.dev:8080/register",
                              data=body,
                              headers=headers)
     xml = BeautifulSoup(response.content, 'xml')
@@ -115,7 +115,7 @@ async def validate(validate_request: ValidateRequest):
                 </soapenv:Envelope>"""
     headers = {'content-type': 'text/xml'}
 
-    response = requests.post("http://localhost:8080/validate",
+    response = requests.post("http://auth-module.dev:8080/validate",
                              data=body,
                              headers=headers)
     xml = BeautifulSoup(response.content, 'xml')
