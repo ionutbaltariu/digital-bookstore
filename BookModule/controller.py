@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = ["*"]
 
+
 def get_documentation_for_specific_resource(endpoint: str) -> dict:
     openapi_schema = get_openapi(
         title="OpenAPI Documentation",
@@ -494,12 +495,12 @@ def get_documentation_for_books():
 
 
 @app.post("/api/bookcollection/process-order-and-adapt-stocks",
-         response_model=List[Book],
-         responses={500: {"model": Error},
-                    404: {"model": Error},
-                    409: {"model": Error},
-                    200: {"model": List[Book]}},
-         tags=["Orders"])
+          response_model=List[Book],
+          responses={500: {"model": Error},
+                     404: {"model": Error},
+                     409: {"model": Error},
+                     200: {"model": List[Book]}},
+          tags=["Orders"])
 def process_order(order_input: OrderInput):
     """
     Method that a POST request that is meant to be an intermediate for the orders module.

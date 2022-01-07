@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { IconButton, Typography } from '@mui/material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import Card from '@mui/material/Card';
 import { width } from '@mui/system';
 
 
@@ -83,20 +82,6 @@ function BookList() {
                 setData(books);
                 console.log(books);
             });
-
-        // AuthModule dummy request 
-        const body = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"xmlns:gs="http://pos.examples.soap.stateless/Auth">"><soapenv:Header/><soapenv:Body><gs:loginRequest><gs:name>user</gs:name><gs:password>password</gs:password></gs:loginRequest></soapenv:Body></soapenv:Envelope>`;
-
-        fetch("http://localhost:8080/sample", {
-            body: body,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/xml'
-
-            },
-            mode: 'cors',
-        })
-            .then((response) => console.log(response));
     }, []);
 
     return (
