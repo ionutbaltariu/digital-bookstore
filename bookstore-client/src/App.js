@@ -44,7 +44,7 @@ function App() {
                 },
             })
                 .then(response => {
-                    if (response.status == 401) {
+                    if (response.status === 401) {
                         localStorage.removeItem("token");
                         notifyTokenExpired();
                     }
@@ -56,7 +56,7 @@ function App() {
 
     }, []);
 
-    if (!token && window.location.pathname != '/books') {
+    if (!token && window.location.pathname !== '/books') {
         return <Login setToken={setToken} />
     }
 
@@ -64,7 +64,6 @@ function App() {
         <div className="wrapper">
             <ToastContainer></ToastContainer>
             <ThemeProvider theme={theme}>
-                <h1 style={{ textAlign: 'center' }}></h1>
                 <Typography variant="h3" gutterBottom component="div" align='center'>
                     Digital Bookstore
                 </Typography>

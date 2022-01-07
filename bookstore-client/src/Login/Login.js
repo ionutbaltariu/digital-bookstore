@@ -21,7 +21,7 @@ export default function Login({ setToken }) {
 
     return (
         <div className="login-wrapper">
-            <ToastContainer></ToastContainer>
+            <ToastContainer/>
             <div style={{
                 height: '50%', width: '15%', position: 'absolute', left: '50%', top: '50%',
                 transform: 'translate(-50%, -50%)'

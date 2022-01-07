@@ -2,9 +2,6 @@ from books import Book
 from authors import Author
 from books_authors import BooksAuthors
 from db import Session, engine
-import json
-
-local_session = Session(bind=engine)
 
 
 def get_book_by_isbn(isbn):
@@ -31,23 +28,25 @@ def insert_book(book):
 
     :param book: a dictionary containing the book's fields
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    book_to_insert = Book(isbn=book['isbn'],
-                          title=book['title'],
-                          publisher=book['publisher'],
-                          year_of_publishing=book['year_of_publishing'],
-                          genre=book['genre'])
-    try:
-        local_session.add(book_to_insert)
-        local_session.commit()
-        response.completed_operation = True
-        response.payload = book_to_insert
-    except Exception as e:
-        response.completed_operation = False
-        response.error = e
+        book_to_insert = Book(isbn=book['isbn'],
+                              title=book['title'],
+                              publisher=book['publisher'],
+                              year_of_publishing=book['year_of_publishing'],
+                              genre=book['genre'])
+        try:
+            session.add(book_to_insert)
+            session.commit()
+            response.completed_operation = True
+            response.payload = book_to_insert
+        except Exception as e:
+            session.rollback()
+            response.completed_operation = False
+            response.error = e
 
-    return response
+        return response
 
 
 def update_book(isbn, book):
@@ -75,21 +74,23 @@ def insert_author(author):
 
     :param author: a dictionary containing the author's fields
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    author_to_insert = Author(first_name=author['first_name'],
-                              last_name=author['last_name'])
+        author_to_insert = Author(first_name=author['first_name'],
+                                  last_name=author['last_name'])
 
-    try:
-        local_session.add(author_to_insert)
-        local_session.commit()
-        response.completed_operation = True
-        response.payload = author_to_insert
-    except Exception as e:
-        response.completed_operation = False
-        response.error = e
+        try:
+            session.add(author_to_insert)
+            session.commit()
+            response.completed_operation = True
+            response.payload = author_to_insert
+        except Exception as e:
+            session.rollback()
+            response.completed_operation = False
+            response.error = e
 
-    return response
+        return response
 
 
 def delete_author_by_id(author_id):
@@ -119,23 +120,25 @@ def delete_entity_by_identifier(entity, identifier_name, identifier_value):
     :param identifier_name: the column/field by which the identifier will be searched and deleted
     :param identifier_value: the value of the identifier column
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    try:
-        entity_to_delete = local_session.query(entity).filter(
-            getattr(entity, identifier_name) == identifier_value).first()
+        try:
+            entity_to_delete = session.query(entity).filter(
+                getattr(entity, identifier_name) == identifier_value).first()
 
-        if entity_to_delete:
-            local_session.delete(entity_to_delete)
-            local_session.commit()
-        else:
+            if entity_to_delete:
+                session.delete(entity_to_delete)
+                session.commit()
+            else:
+                response.completed_operation = False
+
+        except Exception as e:
+            session.rollback()
             response.completed_operation = False
+            response.error = e
 
-    except Exception as e:
-        response.completed_operation = False
-        response.error = e
-
-    return response
+        return response
 
 
 def get_entity_by_identifier(entity, identifier_name, identifier_value):
@@ -146,19 +149,22 @@ def get_entity_by_identifier(entity, identifier_name, identifier_value):
     :param identifier_name: the column/field by which the identifier will be searched
     :param identifier_value: the value of the identifier column
     """
-    response = OperationResponseWrapper()
-    try:
-        response.payload = local_session.query(entity).filter(
-            getattr(entity, identifier_name) == identifier_value).first()
-        if not response.payload:
-            response.completed_operation = False
-        else:
-            response.completed_operation = True
-    except Exception as e:
-        response.error = e
-        response.completed_operation = False
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    return response
+        try:
+            response.payload = session.query(entity).filter(
+                getattr(entity, identifier_name) == identifier_value).first()
+            if not response.payload:
+                response.completed_operation = False
+            else:
+                response.completed_operation = True
+        except Exception as e:
+            session.rollback()
+            response.error = e
+            response.completed_operation = False
+
+        return response
 
 
 def update_entity_by_identifier(entity, identifier_name, identifier_value, updated_entity_fields):
@@ -170,27 +176,29 @@ def update_entity_by_identifier(entity, identifier_name, identifier_value, updat
     :param identifier_value: the value of the identifier column
     :param updated_entity_fields: a dictionary that contains the new values of the entity
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    try:
-        entity_to_update = local_session.query(entity).filter(
-            getattr(entity, identifier_name) == identifier_value).first()
+        try:
+            entity_to_update = session.query(entity).filter(
+                getattr(entity, identifier_name) == identifier_value).first()
 
-        if entity_to_update:
-            for field in updated_entity_fields:
-                setattr(entity_to_update, field, updated_entity_fields[field])
+            if entity_to_update:
+                for field in updated_entity_fields:
+                    setattr(entity_to_update, field, updated_entity_fields[field])
 
-            local_session.add(entity_to_update)
-            local_session.commit()
-            response.completed_operation = True
-            response.payload = entity_to_update
-        else:
+                session.add(entity_to_update)
+                session.commit()
+                response.completed_operation = True
+                response.payload = entity_to_update
+            else:
+                response.completed_operation = False
+        except Exception as e:
+            session.rollback()
             response.completed_operation = False
-    except Exception as e:
-        response.completed_operation = False
-        response.error = e
+            response.error = e
 
-    return response
+        return response
 
 
 def get_all_entities(entity, **kwargs):
@@ -201,16 +209,18 @@ def get_all_entities(entity, **kwargs):
     :param entity: the type of the entity that is to be retrieved
     :param kwargs: the parameters by which the filters will be made
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    try:
-        response.payload = local_session.query(entity).filter_by(**kwargs).all()
-        response.completed_operation = True
-    except Exception as e:
-        response.error = e
-        response.completed_operation = False
+        try:
+            response.payload = session.query(entity).filter_by(**kwargs).all()
+            response.completed_operation = True
+        except Exception as e:
+            session.rollback()
+            response.error = e
+            response.completed_operation = False
 
-    return response
+        return response
 
 
 def get_all_books_with_filters(**kwargs):
@@ -238,20 +248,23 @@ def get_all_authors_of_book(isbn):
     :param isbn:
     :return:
     """
-    response = OperationResponseWrapper()
-    try:
-        response.payload = local_session \
-            .query(Author) \
-            .join(BooksAuthors) \
-            .filter(BooksAuthors.isbn == isbn) \
-            .all()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-        response.completed_operation = True
-    except Exception as e:
-        response.error = e
-        response.completed_operation = False
+        try:
+            response.payload = session \
+                .query(Author) \
+                .join(BooksAuthors) \
+                .filter(BooksAuthors.isbn == isbn) \
+                .all()
 
-    return response
+            response.completed_operation = True
+        except Exception as e:
+            session.rollback()
+            response.error = e
+            response.completed_operation = False
+
+        return response
 
 
 def add_author_to_book(isbn: str, author):
@@ -292,15 +305,18 @@ def insert_into_books_authors(relation):
     The link ties an author to a specific book.
     :param relation: A dictionary containing both the isbn of the book and the id of the author.
     """
-    did_insert = True
-    try:
-        relation_to_insert = BooksAuthors(index=1, isbn=relation["isbn"], author_id=relation["author_id"])
-        local_session.add(relation_to_insert)
-        local_session.commit()
-    except Exception as e:
-        did_insert = False
+    with Session(bind=engine) as session:
+        did_insert = True
 
-    return did_insert
+        try:
+            relation_to_insert = BooksAuthors(index=1, isbn=relation["isbn"], author_id=relation["author_id"])
+            session.add(relation_to_insert)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            did_insert = False
+
+        return did_insert
 
 
 def delete_author_from_books_authors(relation):
@@ -309,25 +325,27 @@ def delete_author_from_books_authors(relation):
     Deletes an entry from the books-authors link table.
     :param relation: A dictionary containing both the isbn of the book and the id of the author.
     """
-    response = OperationResponseWrapper()
+    with Session(bind=engine) as session:
+        response = OperationResponseWrapper()
 
-    try:
-        author = local_session.query(BooksAuthors) \
-            .filter_by(author_id=relation["author_id"], isbn=relation["isbn"]) \
-            .first()
+        try:
+            author = session.query(BooksAuthors) \
+                .filter_by(author_id=relation["author_id"], isbn=relation["isbn"]) \
+                .first()
 
-        if author:
-            local_session.delete(author)
-            local_session.commit()
-            response.completed_operation = True
-        else:
-            response.client_error = "Given author is not related to the book."
+            if author:
+                session.delete(author)
+                session.commit()
+                response.completed_operation = True
+            else:
+                response.client_error = "Given author is not related to the book."
+                response.completed_operation = False
+        except Exception as e:
+            session.rollback()
+            response.error = e
             response.completed_operation = False
-    except Exception as e:
-        response.error = e
-        response.completed_operation = False
 
-    return response
+        return response
 
 
 def delete_author_from_book(isbn: str, author):

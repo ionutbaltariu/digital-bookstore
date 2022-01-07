@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { IconButton, Typography } from '@mui/material';
+import {Box, IconButton, Typography} from '@mui/material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { width } from '@mui/system';
-
+import {Modal} from "@mui/material";
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};
 
 const columns = [
     { field: 'isbn', headerName: 'ISBN', flex: 0.5 },
@@ -69,6 +80,13 @@ const columns = [
 
 function BookList() {
     const [data, setData] = useState([]);
+    const [open, setOpen] = React.useState(false);
+    const [bookData, setBookData] = useState()
+    const handleOpen = (params, event) => {
+        setOpen(true);
+        setBookData(`Title: ${params["row"]["title"]} \n ISBN:${params["row"]["isbn"]}`);
+    }
+    const handleClose = () => setOpen(false);
 
     useEffect(() => {
         fetch("http://localhost:8000/api/bookcollection/books/")
@@ -78,6 +96,21 @@ function BookList() {
                 books.forEach(book => {
                     book["id"] = i;
                     i++;
+                    /* using HATEOAS!!*/
+                    fetch(`http://localhost:8000${book["links"]["authors"]["href"]}`)
+                        .then((response) => response.json())
+                        .then((authors) => {
+                            let authorArray =[];
+                            authors.forEach(author => {
+                                let {first_name, last_name} = author;
+                                authorArray.push({
+                                    'first_name': first_name,
+                                    'last_name': last_name
+                                })
+                            })
+
+                            book["authors"] = authorArray;
+                        });
                 });
                 setData(books);
                 console.log(books);
@@ -97,8 +130,25 @@ function BookList() {
                     rows={data}
                     columns={columns}
                     disableSelectionOnClick
+                          onRowClick={handleOpen}
                 />
             </div>
+
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                    <Typography id="modal-modal-title" variant="h6" component="h2">
+                        Text in a modal
+                    </Typography>
+                    <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                        {bookData}
+                    </Typography>
+                </Box>
+            </Modal>
         </div>
     );
 }
