@@ -1,12 +1,12 @@
-import logo from './logo.svg';
 import './App.css';
 import BookList from './BookList/BookList';
+import ShoppingCart from './ShoppingCart/ShoppingCart';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import React, { useState } from 'react';
 import Login from './Login/Login';
 import { blue, red } from '@mui/material/colors';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Typography } from '@mui/material';
+import { Typography, Button } from '@mui/material';
 import { useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,8 +28,10 @@ const notifyTokenExpired = () => toast.info('Your token has expired or is invali
     progress: undefined,
 });
 
+
 function App() {
     const [token, setToken] = useState();
+    const [inCart, setInCart] = useState(false);
 
     useEffect(() => {
         console.log(window.location.pathname);
@@ -48,7 +50,7 @@ function App() {
                         localStorage.removeItem("token");
                         notifyTokenExpired();
                     }
-                    else{
+                    else {
                         setToken(jwt);
                     }
                 })
@@ -60,20 +62,36 @@ function App() {
         return <Login setToken={setToken} />
     }
 
+    if(inCart){
+        return <ShoppingCart setInCart={setInCart}></ShoppingCart>
+    }
+
     return (
         <div className="wrapper">
             <ToastContainer></ToastContainer>
             <ThemeProvider theme={theme}>
-                <Typography variant="h3" gutterBottom component="div" align='center'>
-                    Digital Bookstore
-                </Typography>
+                <Button
+                    style={{
+                        marginRight: '1%',
+                        marginTop: '1%',
+                        float: 'right'
+                    }}
+                    variant="contained"
+                    disableElevation
+                    onClick={() => {
+                        setInCart(!inCart);
+                        console.log(inCart);
+                    }}
+                >
+                    Shopping Cart
+                </Button>
                 <BrowserRouter>
                     <Routes>
+                        <Route path='/' element={<BookList />} />
                         <Route path='/books' element={<BookList />} />
                     </Routes>
                 </BrowserRouter>
             </ThemeProvider>
-
         </div>
     );
 }

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import {Box, IconButton, Typography} from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import { width } from '@mui/system';
-import {Modal} from "@mui/material";
+import InfoIcon from '@mui/icons-material/Info';
+import { Modal } from "@mui/material";
+import './BookList.css';
+
 const style = {
     position: 'absolute',
     top: '50%',
@@ -19,55 +21,22 @@ const style = {
 
 const columns = [
     { field: 'isbn', headerName: 'ISBN', flex: 0.5 },
+    { field: 'title', headerName: 'Book Title', flex: 1, editable: false },
+    { field: 'genre', headerName: 'Genre', flex: 1, editable: false },
+    { field: 'publisher', headerName: 'Publisher', flex: 1, editable: false },
+    { field: 'price', headerName: 'Price', type: 'number', flex: 0.3, editable: false },
+    { field: 'stock', headerName: 'Stock', flex: 0.3, editable: false },
+    { field: 'year_of_publishing', headerName: 'Year of publishing', flex: 0.6, editable: false },
     {
-        field: 'title',
-        headerName: 'Book Title',
-        flex: 1,
-        editable: false,
-    },
-    {
-        field: 'genre',
-        headerName: 'Genre',
-        flex: 1,
-        editable: false,
-    },
-    {
-        field: 'publisher',
-        headerName: 'Publisher',
-        flex: 1,
-        editable: false,
-    },
-    {
-        field: 'price',
-        headerName: 'Price',
-        type: 'number',
-        flex: 0.3,
-        editable: false,
-    },
-    {
-        field: 'stock',
-        headerName: 'Stock',
-        flex: 0.3,
-        editable: false,
-    },
-    {
-        field: 'year_of_publishing',
-        headerName: 'Year of publishing',
-        flex: 0.6,
-        editable: false,
-    },
-    {
-        field: "actions",
-        headerName: "",
-        sortable: false,
-        flex: 0.2,
-        disableClickEventBubbling: true,
+        field: "actions", headerName: "", sortable: false, flex: 0.2, disableClickEventBubbling: true,
         renderCell: (params) => {
             return (
                 <IconButton
                     color="primary"
                     aria-label="add to shopping cart"
-                    onClick={() => {
+                    onClick={(event) => {
+                        /* disable onrowclick for this cell*/
+                        event.stopPropagation();
                         console.log(params);
                     }}
                 >
@@ -81,10 +50,25 @@ const columns = [
 function BookList() {
     const [data, setData] = useState([]);
     const [open, setOpen] = React.useState(false);
-    const [bookData, setBookData] = useState()
+    const [bookData, setBookData] = useState();
+    const [bookDataTitle, setBookDataTitle] = useState()
     const handleOpen = (params, event) => {
         setOpen(true);
-        setBookData(`Title: ${params["row"]["title"]} \n ISBN:${params["row"]["isbn"]}`);
+        const bookDetails = params["row"];
+        let authors = '';
+        if (bookDetails["authors"].length > 0) {
+            authors = `Written by: ${bookDetails["authors"]
+                .map((x) => `${x["first_name"]} ${x["last_name"]}`)
+                .reduce((x, y) => x + ', ' + y)}`;
+        }
+        setBookData(`ISBN:${bookDetails["isbn"]} 
+                    Genre: ${bookDetails["genre"]}
+                    Publisher: ${bookDetails["publisher"]}
+                    Price: ${bookDetails["price"]}
+                    Stock: ${bookDetails["stock"]}
+                    Year of publishing: ${bookDetails["year_of_publishing"]}
+                    ${authors}`);
+        setBookDataTitle(`${bookDetails["title"]}`);
     }
     const handleClose = () => setOpen(false);
 
@@ -100,9 +84,9 @@ function BookList() {
                     fetch(`http://localhost:8000${book["links"]["authors"]["href"]}`)
                         .then((response) => response.json())
                         .then((authors) => {
-                            let authorArray =[];
+                            let authorArray = [];
                             authors.forEach(author => {
-                                let {first_name, last_name} = author;
+                                let { first_name, last_name } = author;
                                 authorArray.push({
                                     'first_name': first_name,
                                     'last_name': last_name
@@ -119,19 +103,22 @@ function BookList() {
 
     return (
         <div className="wrapper">
-            <Typography variant="h4" gutterBottom component="div" align='center' paddingBottom={2}>
-                Available Books
-            </Typography>
-            <div style={{
-                height: '50%', width: '70%', position: 'absolute', left: '50%', top: '50%',
-                transform: 'translate(-50%, -50%)'
-            }}>
-                <DataGrid style={{ borderColor: 'black' }}
+            <div className='book-table vertically-centered'>
+                <DataGrid style={{ borderColor: 'black', backgroundColor: 'white' }}
                     rows={data}
                     columns={columns}
                     disableSelectionOnClick
-                          onRowClick={handleOpen}
+                    onRowClick={handleOpen}
                 />
+                <div className='helper'>
+                    <InfoIcon
+                        color="primary"
+                    ></InfoIcon>
+                    <br></br>
+                    <Typography id="modal-title" variant="p" gutterBottom>
+                        Click a book row to see more details about it.
+                    </Typography>
+                </div>
             </div>
 
             <Modal
@@ -141,10 +128,15 @@ function BookList() {
                 aria-describedby="modal-modal-description"
             >
                 <Box sx={style}>
-                    <Typography id="modal-modal-title" variant="h6" component="h2">
-                        Text in a modal
+                    <Typography id="modal-title" variant="h6" component="h2" sx={{
+                        textAlign: 'center'
+                    }}>
+                        {bookDataTitle}
                     </Typography>
-                    <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                    <Typography id="modal-description" sx={{
+                        whiteSpace: 'pre-line',
+                        textAlign: 'center'
+                    }}>
                         {bookData}
                     </Typography>
                 </Box>
