@@ -5,9 +5,18 @@ from db import orders_database
 from view import OrderInput, OrderOutput, Error, Book
 import requests
 import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
+origins = ["*"]
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/api/orders",
           responses={200: {"model": OrderOutput},
@@ -19,7 +28,7 @@ app = FastAPI()
 async def check_and_place_order(order_input: OrderInput):
     user_id = 5  # hardcoded for the moment
     # to be replaced with a call to the AuthModule or anything that suits the problem
-
+    print(order_input)
     if user_id:
         order = {}
         response = requests.post("http://book-module.dev:8000/api/bookcollection/process-order-and-adapt-stocks",
@@ -33,6 +42,7 @@ async def check_and_place_order(order_input: OrderInput):
                 del book["links"]
 
             order["date"] = datetime.datetime.now()
+            # TODO: modify, this inserts the remaining stocks of the item in the database..
             order["items"] = response_body
             order["status"] = "FINALIZED"
             orders_database[f"client.{user_id}"].insert_one(order)

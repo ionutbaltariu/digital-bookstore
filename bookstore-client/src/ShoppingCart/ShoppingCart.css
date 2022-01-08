@@ -1,0 +1,18 @@
+.vertically-centered {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+}
+
+.cart {
+    position: absolute;
+    height: 33%;
+    width: 33%;
+}
+
+.order-btn {
+    text-align: center;
+    width: 100%;
+    margin-top: 1%;
+}

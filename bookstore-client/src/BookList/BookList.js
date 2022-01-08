@@ -6,6 +6,18 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import InfoIcon from '@mui/icons-material/Info';
 import { Modal } from "@mui/material";
 import './BookList.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const notify = () => toast.error('Cannot add the book to the cart. Stocks are depleted.', {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+});
 
 const style = {
     position: 'absolute',
@@ -37,7 +49,7 @@ const columns = [
                     onClick={(event) => {
                         /* disable onrowclick for this cell*/
                         event.stopPropagation();
-                        console.log(params);
+                        addBookToCart(params["row"]);
                     }}
                 >
                     <AddShoppingCartIcon />
@@ -47,11 +59,46 @@ const columns = [
     }
 ];
 
+function addBookToCart(book) {
+    const shoppingCartBooks = JSON.parse(localStorage.getItem("shoppingCartItems"));
+    let exists = false;
+
+    if (book['stock'] !== 0) {
+        for (let cartBook of shoppingCartBooks) {
+            if (cartBook["isbn"] === book["isbn"]) {
+
+                if (cartBook["number"] < book["stock"]) {
+                    cartBook["number"]++;
+                }
+                else {
+                    notify();
+                }
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists) {
+            shoppingCartBooks.push({
+                'isbn': book["isbn"],
+                'title': book["title"],
+                'number': 1
+            });
+        }
+
+        localStorage.setItem("shoppingCartItems", JSON.stringify(shoppingCartBooks));
+    }
+    else {
+        notify();
+    }
+}
+
 function BookList() {
     const [data, setData] = useState([]);
     const [open, setOpen] = React.useState(false);
     const [bookData, setBookData] = useState();
     const [bookDataTitle, setBookDataTitle] = useState()
+
     const handleOpen = (params, event) => {
         setOpen(true);
         const bookDetails = params["row"];
@@ -70,6 +117,7 @@ function BookList() {
                     ${authors}`);
         setBookDataTitle(`${bookDetails["title"]}`);
     }
+
     const handleClose = () => setOpen(false);
 
     useEffect(() => {
@@ -97,12 +145,12 @@ function BookList() {
                         });
                 });
                 setData(books);
-                console.log(books);
             });
     }, []);
 
     return (
         <div className="wrapper">
+            <ToastContainer />
             <div className='book-table vertically-centered'>
                 <DataGrid style={{ borderColor: 'black', backgroundColor: 'white' }}
                     rows={data}

@@ -34,7 +34,10 @@ function App() {
     const [inCart, setInCart] = useState(false);
 
     useEffect(() => {
-        console.log(window.location.pathname);
+        if(localStorage.getItem("shoppingCartItems") === null){
+            localStorage.setItem("shoppingCartItems", JSON.stringify([]));
+        }
+
         let jwt = localStorage.getItem("token");
 
         if (jwt) {
