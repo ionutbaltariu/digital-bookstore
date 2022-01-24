@@ -11,7 +11,7 @@ import json
 from utils import validate_book_post_or_put_body
 from fastapi.responses import JSONResponse
 from fastapi_hypermodel import HyperModel
-from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess, OrderInput
+from base_models import Book, SimplifiedBook, Author, AuthorPostBody, Error, GenericSuccess, OrderInput, OrderBook
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -499,7 +499,7 @@ def get_documentation_for_books():
           responses={500: {"model": Error},
                      404: {"model": Error},
                      409: {"model": Error},
-                     200: {"model": List[Book]}},
+                     200: {"model": List[OrderBook]}},
           tags=["Orders"])
 def process_order(order_input: OrderInput):
     """
@@ -516,7 +516,7 @@ def process_order(order_input: OrderInput):
     # this way we avoid making a SELECT for every book
     # in the order
     response_body = None
-    status_code = 200
+    status_code = 201
 
     if db_response.payload:
         all_books = db_response.payload
@@ -533,7 +533,18 @@ def process_order(order_input: OrderInput):
                 if actual_stock - ordered_book.quantity >= 0:
                     current_book = all_books_indexed[isbn]
                     current_book["stock"] -= ordered_book.quantity
-                    response_body.append(current_book)
+
+                    ordered_book_item = {
+                        "isbn": current_book["isbn"],
+                        "title": current_book["title"],
+                        "publisher": current_book["publisher"],
+                        "year_of_publishing": current_book["year_of_publishing"],
+                        "genre": current_book["genre"],
+                        "price": current_book["price"],
+                        "quantity": ordered_book.quantity
+                    }
+
+                    response_body.append(ordered_book_item)
                     updated_books.append(current_book)
                 else:
                     updated_books = []

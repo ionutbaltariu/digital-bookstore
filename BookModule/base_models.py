@@ -53,6 +53,16 @@ class SimplifiedBook(HyperModel):
         orm_mode = True
 
 
+class OrderBook(BaseModel):
+    isbn: str
+    title: str
+    publisher: str
+    year_of_publishing: int
+    genre: str
+    price: float
+    quantity: int
+
+
 class Author(HyperModel):
     id: int
     first_name: str

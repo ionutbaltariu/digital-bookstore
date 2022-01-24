@@ -18,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post("/api/orders",
           responses={200: {"model": OrderOutput},
                      404: {"model": Error},
@@ -35,15 +36,11 @@ async def check_and_place_order(order_input: OrderInput):
                                  data=order_input.json())
         response_body = response.json()
 
-        if response.status_code == 200:
-            status_code = 200
-
-            for book in response_body:
-                del book["links"]
-
+        if response.status_code == 201:
+            status_code = 201
             order["date"] = datetime.datetime.now()
-            # TODO: modify, this inserts the remaining stocks of the item in the database..
             order["items"] = response_body
+            print(response_body)
             order["status"] = "FINALIZED"
             orders_database[f"client.{user_id}"].insert_one(order)
         else:
