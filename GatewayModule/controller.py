@@ -1,12 +1,12 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from view import LoginResponse, RegisterResponse, ValidateResponse, LoginRequest, RegisterRequest, ValidateRequest
 import requests
-import datetime
 from fastapi.middleware.cors import CORSMiddleware
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
+import json
 
 origins = ["*"]
 app = FastAPI()
@@ -24,6 +24,12 @@ app.add_middleware(
           response_model=LoginResponse
           )
 async def login(login_request: LoginRequest):
+    """
+    Method that's used to login the user into the digital bookstore.
+
+    :param login_request: Classical username-password request
+    :return: JWT if credentials are valid
+    """
     body = f"""<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                                   xmlns:gs="http://pos.examples.soap.stateless/login">">
                    <soapenv:Header/>
@@ -55,9 +61,14 @@ async def login(login_request: LoginRequest):
 
 
 @app.post("/register",
-          response_model=LoginResponse
-          )
+          response_model=RegisterResponse)
 async def register(register_request: RegisterRequest):
+    """
+    Method that's used to register a user.
+
+    :param register_request: Classical username-password request
+    :return: 201 Created with empty body or 406 with error message
+    """
     body = f"""<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                                   xmlns:gs="http://pos.examples.soap.stateless/register">
                    <soapenv:Header/>
@@ -92,10 +103,8 @@ async def register(register_request: RegisterRequest):
             'errorMessage': error_message_node.text
         }
     else:
-        status_code = 200
-        response_body = {
-            'status': status_node.text
-        }
+        status_code = 201
+        response_body = {}
 
     return JSONResponse(status_code=status_code, content=response_body)
 
@@ -104,6 +113,12 @@ async def register(register_request: RegisterRequest):
           response_model=ValidateResponse
           )
 async def validate(validate_request: ValidateRequest):
+    """
+    Method that's used to validate the token of a user.
+
+    :param validate_request: Dict that contains the token
+    :return: 200 with the client's role, 401 if invalid, 500 in case of server exception
+    """
     body = f"""<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                                   xmlns:gs="http://pos.examples.soap.stateless/validate">
                    <soapenv:Header/>
@@ -146,6 +161,36 @@ async def validate(validate_request: ValidateRequest):
         response_body = {
             'status': 'Unexpected server error.'
         }
+
+    return JSONResponse(status_code=status_code, content=response_body)
+
+
+@app.post("/orders")
+async def make_order(request: Request):
+    req_body = json.dumps(await request.json())
+    token = request.headers.get('Authorization').split()[1]
+    validate_req = ValidateRequest(token=token)
+    validate_response = await validate(validate_req)
+    status_code = 201
+    response_body = {}
+
+    if validate_response.status_code == 200:
+        role = json.loads(validate_response.body)["role"]
+
+        if role != "User":
+            status_code = 403
+            response_body["errorReason"] = "An administrator can not place orders. Please use a normal user account."
+        else:
+            headers = {'content-type': 'application/json'}
+            body = req_body
+            orders_request = requests.post("http://order-module.dev:8001/api/orders",
+                                           data=body,
+                                           headers=headers)
+            status_code = orders_request.status_code
+            response_body = orders_request.json()
+    else:
+        status_code = 401
+        response_body["errorReason"] = "Authorization of your account failed. Please log in again."
 
     return JSONResponse(status_code=status_code, content=response_body)
 

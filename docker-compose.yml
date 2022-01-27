@@ -76,7 +76,9 @@ services:
     ports:
       - 8001:8001
     networks:
-      - some-net
+      some-net:
+        aliases:
+          - order-module.dev
 
   auth_module:
     container_name: 'auth_module'
@@ -98,9 +100,9 @@ services:
     container_name: 'auth_proxy'
     restart: always
     build:
-      context: AuthProxy
+      context: GatewayModule
     volumes:
-      - ./AuthProxy:/app
+      - ./GatewayModule:/app
     ports:
       - 8002:8002
     networks:

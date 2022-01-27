@@ -8,3 +8,13 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_UN` (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+LOCK TABLES `users` WRITE;
+
+INSERT INTO
+  `users`
+VALUES
+    (1, 'xenojohn','$2y$10$S1a59TKiFxK80XZLp07sHeTRIbx8IdAk7SVkCidGsn/2OLqwswtpC','User'),
+    (2, 'xenoadmin','$2y$10$S1a59TKiFxK80XZLp07sHeTRIbx8IdAk7SVkCidGsn/2OLqwswtpC','Admin');
+
+UNLOCK TABLES;

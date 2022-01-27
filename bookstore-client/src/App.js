@@ -6,10 +6,10 @@ import React, { useState } from 'react';
 import Login from './Login/Login';
 import { blue, red } from '@mui/material/colors';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Typography, Button } from '@mui/material';
 import { useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Button } from '@mui/material';
 
 const theme = createTheme({
     palette: {
@@ -18,6 +18,7 @@ const theme = createTheme({
         },
     },
 });
+
 const notifyTokenExpired = () => toast.info('Your token has expired or is invalid. Please log in again', {
     position: "top-center",
     autoClose: 5000,
@@ -34,7 +35,7 @@ function App() {
     const [inCart, setInCart] = useState(false);
 
     useEffect(() => {
-        if(localStorage.getItem("shoppingCartItems") === null){
+        if (localStorage.getItem("shoppingCartItems") === null) {
             localStorage.setItem("shoppingCartItems", JSON.stringify([]));
         }
 
@@ -65,29 +66,50 @@ function App() {
         return <Login setToken={setToken} />
     }
 
-    if(inCart){
+    if (inCart) {
         return <ShoppingCart setInCart={setInCart}></ShoppingCart>
     }
 
     return (
         <div className="wrapper">
             <ToastContainer></ToastContainer>
+            <Button
+                style={{
+                    marginRight: '1%',
+                    marginTop: '1%',
+                    float: 'right'
+                }}
+                variant="contained"
+                disableElevation
+                onClick={() => {
+                    setInCart(!inCart);
+                    console.log(inCart);
+                }}
+            >
+                Shopping Cart
+            </Button>
+            {/* react's way of conditional */}
+            {token ? (
+                <div>
+                    <Button
+                        style={{
+                            marginLeft: '1%',
+                            marginTop: '1%',
+                            float: 'left'
+                        }}
+                        variant="contained"
+                        disableElevation
+                        onClick={() => {
+                            setToken(undefined);
+                            localStorage.setItem("token", undefined);
+                        }}
+                    >
+                        Logout
+                    </Button>
+                </div>
+            ) : (<span></span>)}
             <ThemeProvider theme={theme}>
-                <Button
-                    style={{
-                        marginRight: '1%',
-                        marginTop: '1%',
-                        float: 'right'
-                    }}
-                    variant="contained"
-                    disableElevation
-                    onClick={() => {
-                        setInCart(!inCart);
-                        console.log(inCart);
-                    }}
-                >
-                    Shopping Cart
-                </Button>
+
                 <BrowserRouter>
                     <Routes>
                         <Route path='/' element={<BookList />} />

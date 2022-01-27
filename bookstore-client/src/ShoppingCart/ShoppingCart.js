@@ -6,15 +6,40 @@ import { DataGrid } from '@mui/x-data-grid';
 import './ShoppingCart.css';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { ToastContainer, toast } from 'react-toastify';
+import { Typography } from '@mui/material';
+
+const notifyError = (message) => toast.error(message, {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+});
+
+const notifyInfo = (message) => toast.info(message, {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+});
 
 export default function ShoppingCart({ setInCart }) {
     const [cartItems, setCartItems] = useState([]);
+    const [token, setToken] = useState();
 
     useEffect(() => {
         setCartItems(JSON.parse(localStorage.getItem("shoppingCartItems")).map((x, i) => {
             x["id"] = i;
             return x;
-        }))
+        }));
+
+        setToken(localStorage.getItem("token"));
     }, []);
 
     const columns = [
@@ -76,8 +101,50 @@ export default function ShoppingCart({ setInCart }) {
         setCartItems(newItems);
     }
 
+    const onOrderRequest = (response) => {
+        if (response.ok) {
+            localStorage.setItem("shoppingCartItems", JSON.stringify([]));
+            setCartItems([]);
+            notifyInfo("Order has been placed.");
+        }
+        else if (parseInt(response.status) === 401) {
+            notifyError("An error occured while authorizing the request. Please log back into your account.")
+            localStorage.setItem("token", undefined);
+            setToken(undefined);
+        }
+        else if (parseInt(response.status) === 403) {
+            notifyError("Order cannot be placed from an administrator account.")
+        }
+    }
+
+    const onOrderButtonClick = () => {
+        let orderedBooks = [];
+        cartItems.forEach(item => {
+            orderedBooks.push({
+                'isbn': item['isbn'],
+                'quantity': item['number']
+            });
+        });
+
+        const body = JSON.stringify({
+            "user": "user",
+            "books": orderedBooks
+        })
+
+        fetch("http://localhost:8002/orders", {
+            body: body,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        })
+            .then((response) => onOrderRequest(response));
+    }
+
     return (
         <div>
+            <ToastContainer></ToastContainer>
             <Button
                 style={{
                     marginLeft: '1%',
@@ -98,46 +165,31 @@ export default function ShoppingCart({ setInCart }) {
                     rows={cartItems}
                     disableSelectionOnClick
                 />
-                <div className='order-btn'>
-                    <Button
-                        sx={{
-                            marginTop: '1%',
-                        }}
-                        variant="contained"
-                        disableElevation
-                        onClick={() => {
-                            let orderedBooks = [];
-                            cartItems.forEach(item => {
-                                orderedBooks.push({
-                                    'isbn': item['isbn'],
-                                    'quantity': item['number']
-                                });
-                            });
+                {token ? (
+                    <div className='order-btn'>
+                        <Button
+                            sx={{
+                                marginTop: '1%',
+                            }}
+                            variant="contained"
+                            disableElevation
+                            onClick={onOrderButtonClick}
+                        >
+                            Send Order
+                        </Button>
+                    </div>
+                ) : (
+                    <div className='msg'>
 
-                            const body = JSON.stringify({
-                                "user": "user",
-                                "books": orderedBooks
-                            })
-                            console.log(body);
-                            fetch("http://localhost:8001/api/orders", {
-                                body: body,
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                            })
-                                .then((response) => console.log(response))
-                                .then(() => {
-                                    localStorage.setItem("shoppingCartItems", JSON.stringify([]));
-                                    setCartItems([]);
-                                });
+                        <Typography
+                            variant="p"
+                            gutterBottom
+                        >
+                            Please log in to send an order.
+                        </Typography>
+                    </div>
+                )}
 
-                            console.log(cartItems);
-                        }}
-                    >
-                        Send Order
-                    </Button>
-                </div>
             </div>
         </div>
     );
