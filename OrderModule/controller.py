@@ -27,9 +27,8 @@ app.add_middleware(
           response_model=OrderOutput
           )
 async def check_and_place_order(order_input: OrderInput):
-    user_id = 5  # hardcoded for the moment
-    # to be replaced with a call to the AuthModule or anything that suits the problem
-    print(order_input)
+    user_id = order_input.user_id
+
     if user_id:
         order = {}
         response = requests.post("http://book-module.dev:8000/api/bookcollection/process-order-and-adapt-stocks",
@@ -40,7 +39,6 @@ async def check_and_place_order(order_input: OrderInput):
             status_code = 201
             order["date"] = datetime.datetime.now()
             order["items"] = response_body
-            print(response_body)
             order["status"] = "FINALIZED"
             orders_database[f"client.{user_id}"].insert_one(order)
         else:

@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Box, TextField, Button, Typography } from '@mui/material';
 
-export default function Login({ setToken }) {
+export default function Login({ setToken, setInRegister }) {
     const [username, setUserName] = useState();
     const [password, setPassword] = useState();
 
@@ -80,12 +80,15 @@ export default function Login({ setToken }) {
                 <Typography gutterBottom component="div" align='center' paddingTop={1}>
                     No account? Books can be viewed <a href='/books'>here</a>
                 </Typography>
-
+                <Typography gutterBottom component="div" align='center' paddingTop={1}>
+                    No account? One can register <a href='#' onClick={() => setInRegister(true)}>here</a>
+                </Typography>
             </div>
         </div>
     )
 }
 
 Login.propTypes = {
-    setToken: PropTypes.func.isRequired
+    setToken: PropTypes.func.isRequired,
+    setInRegister: PropTypes.func.isRequired
 }

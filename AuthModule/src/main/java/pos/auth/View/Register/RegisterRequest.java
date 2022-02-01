@@ -8,6 +8,11 @@ import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
+        "firstname",
+        "lastname",
+        "email",
+        "address",
+        "birthday",
         "name",
         "password"
 })
@@ -15,7 +20,16 @@ import javax.xml.bind.annotation.*;
 @Getter
 @Setter
 public class RegisterRequest {
-
+    @XmlElement(required = true)
+    protected String firstname;
+    @XmlElement(required = true)
+    protected String lastname;
+    @XmlElement(required = true)
+    protected String email;
+    @XmlElement(required = true)
+    protected String address;
+    @XmlElement(required = true)
+    protected String birthday;
     @XmlElement(required = true)
     protected String name;
     @XmlElement(required = true)

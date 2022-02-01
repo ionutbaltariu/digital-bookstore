@@ -10,6 +10,8 @@ import { useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from '@mui/material';
+import Register from './Register/Register';
+import Profile from './Profile/Profile';
 
 const theme = createTheme({
     palette: {
@@ -33,6 +35,8 @@ const notifyTokenExpired = () => toast.info('Your token has expired or is invali
 function App() {
     const [token, setToken] = useState();
     const [inCart, setInCart] = useState(false);
+    const [inRegister, setInRegister] = useState(false);
+    const [inProfile, setInProfile] = useState(false);
 
     useEffect(() => {
         if (localStorage.getItem("shoppingCartItems") === null) {
@@ -49,7 +53,9 @@ function App() {
                     'Content-Type': 'application/json'
                 },
             })
-                .then(response => {
+                .then(async (response) => {
+                    const resp_body = await response.json();
+
                     if (response.status === 401) {
                         localStorage.removeItem("token");
                         notifyTokenExpired();
@@ -62,8 +68,17 @@ function App() {
 
     }, []);
 
+
+    if (inRegister) {
+        return <Register setInRegister={setInRegister}></Register>
+    }
+
+    if (inProfile) {
+        return <Profile setInProfile={setInProfile} ></Profile>
+    }
+
     if (!token && window.location.pathname !== '/books') {
-        return <Login setToken={setToken} />
+        return <Login setToken={setToken} setInRegister={setInRegister} />
     }
 
     if (inCart) {
@@ -83,11 +98,26 @@ function App() {
                 disableElevation
                 onClick={() => {
                     setInCart(!inCart);
-                    console.log(inCart);
                 }}
             >
                 Shopping Cart
             </Button>
+
+            <Button
+                style={{
+                    marginRight: '1%',
+                    marginTop: '1%',
+                    float: 'right'
+                }}
+                variant="contained"
+                disableElevation
+                onClick={() => {
+                    setInProfile(!inProfile);
+                }}
+            >
+                Profile
+            </Button>
+
             {/* react's way of conditional */}
             {token ? (
                 <div>
@@ -108,6 +138,7 @@ function App() {
                     </Button>
                 </div>
             ) : (<span></span>)}
+
             <ThemeProvider theme={theme}>
 
                 <BrowserRouter>

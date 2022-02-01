@@ -18,7 +18,7 @@ public class JwtUserDetailsService {
         UserEntity user;
         if(!usersWithGivenUsername.isEmpty()){
             user = usersWithGivenUsername.get(0);
-            return new UserDTO(user.getUsername(), user.getPassword(), user.getRole());
+            return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
         }
         else{
             throw new Exception("User not found with username: " + username);

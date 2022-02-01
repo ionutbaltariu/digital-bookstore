@@ -33,6 +33,10 @@ public class JwtTokenUtil implements Serializable {
         return (String)getAllClaimsFromToken(token).get("role");
     }
 
+    public int getIdFromToken(String token) {
+        return (int)getAllClaimsFromToken(token).get("id");
+    }
+
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
@@ -52,6 +56,7 @@ public class JwtTokenUtil implements Serializable {
     public String generateToken(UserDTO userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDetails.getRole());
+        claims.put("id", userDetails.getId());
         return doGenerateToken(claims, userDetails.getUsername());
     }
 

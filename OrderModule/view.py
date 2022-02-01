@@ -24,7 +24,7 @@ class IsbnStockPair(BaseModel):
 
 
 class OrderInput(BaseModel):
-    user: str
+    user_id: int
     books: List[IsbnStockPair]
 
 

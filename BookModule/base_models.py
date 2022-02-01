@@ -11,7 +11,7 @@ class IsbnStockPair(BaseModel):
 
 # find a way to share models between Modules
 class OrderInput(BaseModel):
-    user: str
+    user_id: int
     books: List[IsbnStockPair]
 
 

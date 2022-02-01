@@ -121,7 +121,7 @@ function BookList() {
     const handleClose = () => setOpen(false);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/bookcollection/books/")
+        fetch("http://localhost:8002/books/")
             .then((response) => response.json())
             .then((books) => {
                 let i = 0;

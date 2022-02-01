@@ -101,7 +101,7 @@ export default function ShoppingCart({ setInCart }) {
         setCartItems(newItems);
     }
 
-    const onOrderRequest = (response) => {
+    const onOrderRequest = async (response) => {
         if (response.ok) {
             localStorage.setItem("shoppingCartItems", JSON.stringify([]));
             setCartItems([]);
@@ -127,7 +127,6 @@ export default function ShoppingCart({ setInCart }) {
         });
 
         const body = JSON.stringify({
-            "user": "user",
             "books": orderedBooks
         })
 

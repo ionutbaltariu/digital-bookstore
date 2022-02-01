@@ -87,7 +87,7 @@ HyperModel.init_app(app)
          response_model=List[Book],
          tags=["Books"])
 def get_books(genre: str = None, year_of_publishing: int = None,
-              page: int = 1, items_per_page: int = 15, ):
+              page: int = 1, items_per_page: int = 15):
     """
     Method that handles a generic GET request for all of the existent books.
     """
@@ -448,7 +448,6 @@ def delete_author_from_book_by_isbn(isbn: str, author: AuthorPostBody):
     Can be used to delete an author from a specific book (identified by ISBN)
     """
     post_body = json.loads(author.json())
-    print(post_body)
     db_response = delete_author_from_book(isbn, post_body)
 
     if db_response.error:

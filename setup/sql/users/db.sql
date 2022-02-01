@@ -9,6 +9,20 @@ CREATE TABLE `users` (
   UNIQUE KEY `users_UN` (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `user_profiles` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `firstname` varchar(128),
+  `lastname` varchar(128),
+  `email` varchar(128),
+  `address` varchar(128),
+  `birthday` date,
+  `userid` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_email` (`email`),
+  UNIQUE KEY `unique_user_id` (`userid`),
+  FOREIGN KEY (id) REFERENCES users(id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 LOCK TABLES `users` WRITE;
 
 INSERT INTO

@@ -1,0 +1,10 @@
+.profile-wrapper {
+    position: absolute;
+    height: 50%;
+    width: 60%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-color: black;
+    background-color: white;
+}

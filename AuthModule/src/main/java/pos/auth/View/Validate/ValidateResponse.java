@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-        "status", "role"
+        "status", "role", "id"
 })
 @XmlRootElement(name = "validateResponse")
 @Getter
@@ -18,4 +18,7 @@ public class ValidateResponse {
 
     @XmlElement(required = true)
     protected String role;
+
+    @XmlElement(required = true)
+    protected int id;
 }
