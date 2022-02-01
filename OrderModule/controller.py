@@ -6,6 +6,7 @@ from view import OrderInput, OrderOutput, Error, Book
 import requests
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
 origins = ["*"]
 app = FastAPI()
@@ -49,6 +50,21 @@ async def check_and_place_order(order_input: OrderInput):
         response_body = {'error_code': 401, 'error_source': 'User not authenticated', 'error_reason': ''}
 
     return JSONResponse(status_code=status_code, content=response_body)
+
+
+@app.get("/api/orders/{user_id}")
+async def get_orders_for_user(user_id: int):
+    orders = []
+
+    for order in orders_database[f"client.{user_id}"].find():
+        del order["_id"]
+        orders.append({
+            "date": str(order["date"]),
+            "items": order["items"],
+            "status": order["status"]
+        })
+
+    return orders
 
 
 if __name__ == "__main__":

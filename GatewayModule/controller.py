@@ -212,6 +212,35 @@ async def make_order(request: Request):
     return JSONResponse(status_code=status_code, content=response_body)
 
 
+@app.get("/orders")
+async def get_orders_for_user(request: Request):
+    token = request.headers.get('Authorization').split()[1]
+    validate_req = ValidateRequest(token=token)
+    validate_response = await validate(validate_req)
+    status_code = 200
+    response_body = {}
+
+    if validate_response.status_code == 200:
+        resp_body = json.loads(validate_response.body)
+        role = resp_body["role"]
+        user_id = resp_body["id"]
+
+        if role != "User":
+            status_code = 403
+            response_body["errorReason"] = "An administrator can not place orders. Please use a normal user account."
+        else:
+            headers = {'content-type': 'application/json'}
+            orders_request = requests.get(f"http://order-module.dev:8001/api/orders/{user_id}",
+                                          headers=headers)
+            status_code = orders_request.status_code
+            response_body = orders_request.json()
+    else:
+        status_code = 401
+        response_body["errorReason"] = "Authorization of your account failed. Please log in again."
+
+    return JSONResponse(status_code=status_code, content=response_body)
+
+
 @app.get("/books")
 async def get_all_books(genre: str = None, year_of_publishing: int = None,
                         page: int = None, items_per_page: int = None):
