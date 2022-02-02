@@ -24,7 +24,7 @@ public class WebServiceConfig extends WsConfigurerAdapter {
         result.setApplicationContext(applicationContext);
         result.setTransformWsdlLocations(true);
 
-        return new ServletRegistrationBean(result, "/login" , "/register", "/validate");
+        return new ServletRegistrationBean(result, "/login" , "/register", "/validate", "/retrieve");
     }
 
     @Bean(name="login")
@@ -76,5 +76,22 @@ public class WebServiceConfig extends WsConfigurerAdapter {
     @Bean
     public XsdSchema validateSchema(){
         return new SimpleXsdSchema(new ClassPathResource("validate.xsd"));
+    }
+
+    @Bean(name="retrieve")
+    public DefaultWsdl11Definition retrieveDefaultWsdl11Definition(XsdSchema retrieveSchema){
+        DefaultWsdl11Definition result = new DefaultWsdl11Definition();
+
+        result.setPortTypeName("RetrievePort");
+        result.setLocationUri("/retrieve");
+        result.setTargetNamespace("http://pos.examples.soap.stateless/retrieve");
+        result.setSchema(retrieveSchema);
+
+        return result;
+    }
+
+    @Bean
+    public XsdSchema retrieveSchema(){
+        return new SimpleXsdSchema(new ClassPathResource("retrieve.xsd"));
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
 import pos.auth.Model.DTO.UserDTO;
 import pos.auth.Model.JwtTokenUtil;
-import pos.auth.Model.JwtUserDetailsService;
+import pos.auth.Services.JwtUserDetailsService;
 import pos.auth.View.Login.LoginRequest;
 import pos.auth.View.Login.LoginResponse;
 import org.springframework.security.crypto.bcrypt.BCrypt;

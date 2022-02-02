@@ -23,12 +23,18 @@ CREATE TABLE `user_profiles` (
   FOREIGN KEY (id) REFERENCES users(id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-LOCK TABLES `users` WRITE;
+LOCK TABLES `users` WRITE, `user_profiles` WRITE;
 
 INSERT INTO
   `users`
 VALUES
     (1, 'xenojohn','$2y$10$S1a59TKiFxK80XZLp07sHeTRIbx8IdAk7SVkCidGsn/2OLqwswtpC','User'),
     (2, 'xenoadmin','$2y$10$S1a59TKiFxK80XZLp07sHeTRIbx8IdAk7SVkCidGsn/2OLqwswtpC','Admin');
+
+INSERT INTO 
+  `user_profiles`
+VALUES
+  (1, 'John', 'Doe', 'a@b.c', 'Tg. Cucu, Iasi, Romania', '2000-05-31', 1);
+
 
 UNLOCK TABLES;

@@ -1,4 +1,4 @@
-package pos.auth.Model;
+package pos.auth.Services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;

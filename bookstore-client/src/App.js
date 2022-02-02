@@ -103,20 +103,26 @@ function App() {
                 Shopping Cart
             </Button>
 
-            <Button
-                style={{
-                    marginRight: '1%',
-                    marginTop: '1%',
-                    float: 'right'
-                }}
-                variant="contained"
-                disableElevation
-                onClick={() => {
-                    setInProfile(!inProfile);
-                }}
-            >
-                Profile
-            </Button>
+            {/* react's way of conditional */}
+            {token ? (
+                <div>
+
+                    <Button
+                        style={{
+                            marginRight: '1%',
+                            marginTop: '1%',
+                            float: 'right'
+                        }}
+                        variant="contained"
+                        disableElevation
+                        onClick={() => {
+                            setInProfile(!inProfile);
+                        }}
+                    >
+                        Profile
+                    </Button>
+                </div>
+            ) : (<span></span>)}
 
             {/* react's way of conditional */}
             {token ? (

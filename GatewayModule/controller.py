@@ -179,6 +179,12 @@ async def validate(validate_request: ValidateRequest):
 
 @app.post("/orders")
 async def make_order(request: Request):
+    """
+    Method that's used to make an order.
+
+    :param request: Raw request from the front-end, containing a list of isbn-quantity pairs
+    :return: 201 Created if everything is ok, 403 if role is not ok, 401 if authorization failed
+    """
     req_body = await request.json()
     token = request.headers.get('Authorization').split()[1]
     validate_req = ValidateRequest(token=token)
@@ -214,6 +220,12 @@ async def make_order(request: Request):
 
 @app.get("/orders")
 async def get_orders_for_user(request: Request):
+    """
+    Method that's to retrieve all of the orders of an user.
+
+    :param request: Raw GET request from the front-end.
+    :return: 200 and the list of orders if everything is ok, 403 if role is not ok, 401 if authorization failed
+    """
     token = request.headers.get('Authorization').split()[1]
     validate_req = ValidateRequest(token=token)
     validate_response = await validate(validate_req)
@@ -239,6 +251,78 @@ async def get_orders_for_user(request: Request):
         response_body["errorReason"] = "Authorization of your account failed. Please log in again."
 
     return JSONResponse(status_code=status_code, content=response_body)
+
+
+@app.get("/user/data")
+async def get_user_data(request: Request):
+    """
+    Method that's to retrieve the personal information of an user.
+
+    :param request: Raw GET request from the front-end.
+    :return: 200 and the user details if everything is ok, 403 if role is not ok, 401 if authorization failed
+    """
+    token = request.headers.get('Authorization').split()[1]
+    validate_req = ValidateRequest(token=token)
+    validate_response = await validate(validate_req)
+    status_code = 200
+    response_body = {}
+
+    if validate_response.status_code == 200:
+        resp_body = json.loads(validate_response.body)
+        role = resp_body["role"]
+        user_id = resp_body["id"]
+
+        if role != "User":
+            status_code = 403
+            response_body["errorReason"] = "An administrator can not place orders. Please use a normal user account."
+        else:
+            body = f"""<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                                          xmlns:gs="http://pos.examples.soap.stateless/retrieve">
+                           <soapenv:Header/>
+                           <soapenv:Body>
+                              <gs:retrieveRequest>
+                                <gs:id>{user_id}</gs:id>
+                              </gs:retrieveRequest>
+                           </soapenv:Body>
+                        </soapenv:Envelope>"""
+            headers = {'content-type': 'text/xml'}
+
+            response = requests.post("http://auth-module.dev:8080/retrieve",
+                                     data=body,
+                                     headers=headers)
+            status_code = response.status_code
+            response_body = get_dict_from_user_data_xml(response.content)
+    else:
+        status_code = 401
+        response_body["errorReason"] = "Authorization of your account failed. Please log in again."
+
+    return JSONResponse(status_code=status_code, content=response_body)
+
+
+def get_dict_from_user_data_xml(xml_content):
+    xml = BeautifulSoup(xml_content, 'xml')
+
+    firstname = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:firstname').text
+    lastname = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:lastname').text
+    email = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:email').text
+    address = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:address').text
+    birthday = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:birthday').text
+    username = xml.find('SOAP-ENV:Envelope').find('SOAP-ENV:Body').find('ns2:retrieveResponse') \
+        .find('ns2:name').text
+
+    return {
+        "firstname": firstname,
+        "lastname": lastname,
+        "email": email,
+        "address": address,
+        "birthday": birthday,
+        "username": username
+    }
 
 
 @app.get("/books")
